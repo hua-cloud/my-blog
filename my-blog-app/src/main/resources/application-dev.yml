@@ -1,5 +1,5 @@
 server:
-  port: 8091
+  port: 8080
 
 # 线程池配置
 thread:
@@ -15,9 +15,9 @@ thread:
 # 数据库配置；启动时配置数据库资源信息
 spring:
   datasource:
-    username: root
-    password: 123456
-    url: jdbc:mysql://127.0.0.1:3306/xfg_frame_archetype?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/my_blog_dev?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
   hikari:
     pool-name: Retail_HikariCP
