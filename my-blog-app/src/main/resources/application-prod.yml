@@ -12,30 +12,20 @@ thread:
         block-queue-size: 5000
         policy: CallerRunsPolicy
 
-# 数据库配置
-#spring:
-#  datasource:
-#    username: root
-#    password: 123456
-#    url: jdbc:mysql://127.0.0.1:3306/xfg_frame_archetype?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#  hikari:
-#    pool-name: Retail_HikariCP
-#    minimum-idle: 15 #最小空闲连接数量
-#    idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
-#    maximum-pool-size: 25 #连接池最大连接数，默认是10
-#    auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
-#    max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
-#    connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
-#    connection-test-query: SELECT 1
-#  type: com.zaxxer.hikari.HikariDataSource
-
-#mybatis:
-#  mapper-locations: classpath:/mybatis/mapper/*.xml
-#  config-location:  classpath:/mybatis/config/mybatis-config.xml
-
-# 日志
-logging:
-  level:
-    root: info
-  config: classpath:logback-spring.xml
+# 数据库配置；启动时配置数据库资源信息
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/my_blog_dev?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Retail_HikariCP
+      minimum-idle: 5 #最小空闲连接数量
+      maximum-pool-size: 20 #连接池最大连接数，默认是10
+      idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
+      auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
+      connection-test-query: SELECT 1
