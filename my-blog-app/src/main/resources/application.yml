@@ -1,0 +1,5 @@
+spring:
+  config:
+    name: my-blog-app
+  profiles:
+    active: dev
