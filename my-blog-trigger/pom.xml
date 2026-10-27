@@ -15,11 +15,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 系统模块 -->
+        <!-- api模块 -->
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>my-blog-api</artifactId>
         </dependency>
+        <!-- domain模块 -->
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>my-blog-domain</artifactId>

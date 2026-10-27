@@ -17,7 +17,7 @@ public class ThreadPoolConfig {
 
     @Bean
     @ConditionalOnMissingBean(ThreadPoolExecutor.class)
-    public ThreadPoolExecutor threadPoolExecutor(ThreadPoolConfigProperties properties) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public ThreadPoolExecutor threadPoolExecutor(ThreadPoolConfigProperties properties) {
         // 实例化策略
         RejectedExecutionHandler handler;
         switch (properties.getPolicy()){

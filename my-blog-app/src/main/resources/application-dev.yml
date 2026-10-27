@@ -1,6 +1,3 @@
-server:
-  port: 8080
-
 # 线程池配置
 thread:
   pool:

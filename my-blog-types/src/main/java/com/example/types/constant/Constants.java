@@ -1,4 +1,4 @@
-package com.example.types.common;
+package com.example.types.constant;
 
 public class Constants {
 

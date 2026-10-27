@@ -1,13 +1,46 @@
+server:
+  port: 8080
+
 spring:
   config:
     name: my-blog-app
   profiles:
     active: dev
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
 
-# MyBatis 配置【如需使用记得打开】
-#mybatis:
-#  mapper-locations: classpath:/mybatis/mapper/*.xml
-#  config-location:  classpath:/mybatis/config/mybatis-config.xml
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.example.infrastructure.dao.po
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+# Sa-Token 配置
+sa-token:
+  token-name: Authorization
+  # Token 有效期：15 天
+  timeout: 1296000
+  # 无操作冻结时间：不限制
+  active-timeout: -1
+  # 不允许同一账号多地登录
+  is-concurrent: false
+  # 每次登录新建 token
+  is-share: false
+  # 是否输出内部日志
+  is-log: false
+  # 前后端分离模式
+  is-read-cookie: false
+  is-read-header: true
+  is-read-body: false
+  token-prefix: Bearer
+  # JWT 秘钥
+  jwt-secret-key: nachoneko
 
 # 日志
 logging:

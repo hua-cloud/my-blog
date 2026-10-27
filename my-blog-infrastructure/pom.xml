@@ -10,11 +10,6 @@
     <artifactId>my-blog-infrastructure</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-        </dependency>
-
         <!-- domain模块 -->
         <dependency>
             <groupId>com.example</groupId>
@@ -25,5 +20,4 @@
     <build>
         <finalName>my-blog-infrastructure</finalName>
     </build>
-
 </project>
