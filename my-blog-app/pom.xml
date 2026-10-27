@@ -14,11 +14,6 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
@@ -32,7 +27,6 @@
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-jwt</artifactId>
         </dependency>
-
 
         <!-- 工程模块；启动依赖 trigger, infrastructure-->
         <dependency>
