@@ -16,7 +16,8 @@ public enum ResultStatus {
     SERVER_ERROR(500, "服务端异常"),
 
     OPERATION_FAILED(1001, "操作失败"),
-    BAD_CREDENTIALS(1002, "用户名或密码错误"),
+
+    BAD_CREDENTIALS(2002, "用户名或密码错误"),
     ;
 
     private final int code;
