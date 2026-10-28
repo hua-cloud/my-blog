@@ -2,8 +2,8 @@ package com.example.handler;
 
 import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
-import com.example.types.core.BaseEntity;
-import com.example.types.utils.LoginHelper;
+import com.example.infrastructure.dao.po.BasePo;
+import com.example.trigger.http.security.LoginHelper;
 import org.apache.ibatis.reflection.MetaObject;
 
 import org.springframework.stereotype.Component;
@@ -15,24 +15,24 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void insertFill(MetaObject metaObject) {
-        if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BaseEntity baseEntity) {
+        if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BasePo basePo) {
             Integer userId = LoginHelper.getUserId();
             LocalDateTime now = LocalDateTime.now();
-            baseEntity.setCreateBy(userId);
-            baseEntity.setCreateTime(now);
-            baseEntity.setUpdateBy(userId);
-            baseEntity.setUpdateTime(now);
+            basePo.setCreateBy(userId);
+            basePo.setCreateTime(now);
+            basePo.setUpdateBy(userId);
+            basePo.setUpdateTime(now);
 
         }
     }
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BaseEntity baseEntity) {
+        if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BasePo basePo) {
             Integer userId = LoginHelper.getUserId();
             LocalDateTime now = LocalDateTime.now();
-            baseEntity.setUpdateBy(userId);
-            baseEntity.setUpdateTime(now);
+            basePo.setUpdateBy(userId);
+            basePo.setUpdateTime(now);
         }
     }
 }

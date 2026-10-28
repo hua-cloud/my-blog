@@ -3,14 +3,13 @@ package com.example.infrastructure.dao.po;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.types.core.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_user")
-public class SysUser extends BaseEntity {
+public class SysUser extends BasePo {
 
     @TableId(type = IdType.AUTO)
     private Integer id;

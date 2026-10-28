@@ -1,4 +1,4 @@
-package com.example.types.utils;
+package com.example.trigger.http.security;
 
 import cn.dev33.satoken.stp.StpUtil;
 

@@ -15,11 +15,17 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot3-starter</artifactId>
+        </dependency>
+
         <!-- api模块 -->
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>my-blog-api</artifactId>
         </dependency>
+
         <!-- domain模块 -->
         <dependency>
             <groupId>com.example</groupId>

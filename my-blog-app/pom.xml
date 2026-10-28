@@ -28,11 +28,13 @@
             <artifactId>sa-token-jwt</artifactId>
         </dependency>
 
-        <!-- 工程模块；启动依赖 trigger, infrastructure-->
+        <!-- trigger模块 -->
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>my-blog-trigger</artifactId>
         </dependency>
+
+        <!-- infrastructure模块 -->
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>my-blog-infrastructure</artifactId>

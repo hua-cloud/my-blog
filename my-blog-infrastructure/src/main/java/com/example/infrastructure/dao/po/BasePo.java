@@ -1,4 +1,4 @@
-package com.example.types.core;
+package com.example.infrastructure.dao.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -7,7 +7,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class BaseEntity {
+public class BasePo {
 
     @TableField(fill = FieldFill.INSERT)
     private Integer createBy;

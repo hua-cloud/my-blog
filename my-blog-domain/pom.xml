@@ -10,6 +10,10 @@
     <artifactId>my-blog-domain</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
 
         <!-- types模块 -->
         <dependency>
@@ -32,5 +36,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
