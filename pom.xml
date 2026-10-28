@@ -61,8 +61,10 @@
             <!-- Sa-Token 权限认证（SpringBoot 3.x） -->
             <dependency>
                 <groupId>cn.dev33</groupId>
-                <artifactId>sa-token-spring-boot3-starter</artifactId>
-                <version>${sa-token.version}</version>
+                <artifactId>sa-token-bom</artifactId>
+                <version>1.45.0</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <!-- Sa-Token JWT 插件（无状态模式） -->

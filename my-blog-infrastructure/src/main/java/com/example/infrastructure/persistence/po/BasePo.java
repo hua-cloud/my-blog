@@ -1,4 +1,4 @@
-package com.example.infrastructure.dao.po;
+package com.example.infrastructure.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;

@@ -1,14 +1,16 @@
-package com.example.handler;
+package com.example.infrastructure.persistence.audit;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
-import com.example.infrastructure.dao.po.BasePo;
-import com.example.trigger.http.security.LoginHelper;
+import com.example.infrastructure.persistence.po.BasePo;
 import org.apache.ibatis.reflection.MetaObject;
 
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+
+import static com.example.types.constant.Constants.DEFAULT_OPERATOR_ID;
 
 @Component
 public class AuditMetaObjectHandler implements MetaObjectHandler {
@@ -16,11 +18,11 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BasePo basePo) {
-            Integer userId = LoginHelper.getUserId();
             LocalDateTime now = LocalDateTime.now();
-            basePo.setCreateBy(userId);
+            Integer operatorId = getCurrentOperatorId();
+            basePo.setCreateBy(operatorId);
             basePo.setCreateTime(now);
-            basePo.setUpdateBy(userId);
+            basePo.setUpdateBy(operatorId);
             basePo.setUpdateTime(now);
 
         }
@@ -29,10 +31,13 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BasePo basePo) {
-            Integer userId = LoginHelper.getUserId();
             LocalDateTime now = LocalDateTime.now();
-            basePo.setUpdateBy(userId);
+            basePo.setUpdateBy(getCurrentOperatorId());
             basePo.setUpdateTime(now);
         }
+    }
+
+    private Integer getCurrentOperatorId() {
+        return StpUtil.isLogin() ? StpUtil.getLoginIdAsInt() : DEFAULT_OPERATOR_ID;
     }
 }

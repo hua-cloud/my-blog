@@ -1,4 +1,4 @@
-package com.example.infrastructure.dao.po;
+package com.example.infrastructure.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;

@@ -1,4 +1,4 @@
-package com.example.handler;
+package com.example.trigger.http.advice;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import com.example.api.response.R;
