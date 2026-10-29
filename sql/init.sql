@@ -19,7 +19,6 @@ CREATE TABLE sys_user (
     PRIMARY KEY (id),
     UNIQUE KEY uk_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
--- 1,admin,$2a$10$Al81Oyzpx7p.bcjKaLOOsuCHCHvZuTq0vHab8VFkNplbMHWvYsEOu,,,,,1,1,1,2026-10-28 02:51:27,1,2026-10-28 02:51:33
 
 
 -- ============================================
