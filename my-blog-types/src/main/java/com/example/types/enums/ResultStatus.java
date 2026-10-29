@@ -7,14 +7,12 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ResultStatus {
 
-    SUCCESS(200, "操作成功"),
-
     BAD_REQUEST(400, "请求参数错误"),
-
     UNAUTHORIZED(401, "未登录或 Token 已过期"),
 
     SERVER_ERROR(500, "服务端异常"),
 
+    OPERATION_SUCCESS(1000, "操作成功"),
     OPERATION_FAILED(1001, "操作失败"),
 
     BAD_CREDENTIALS(2002, "用户名或密码错误"),

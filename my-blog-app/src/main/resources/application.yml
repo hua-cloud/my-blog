@@ -14,7 +14,7 @@ spring:
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
-  type-aliases-package: com.example.infrastructure.dao.po
+  type-aliases-package: com.example.infrastructure.persistence.po
   configuration:
     map-underscore-to-camel-case: true
   global-config:

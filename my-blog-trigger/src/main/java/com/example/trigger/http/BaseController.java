@@ -4,24 +4,24 @@ import com.example.api.response.R;
 import com.example.types.enums.ResultStatus;
 
 import static com.example.types.enums.ResultStatus.OPERATION_FAILED;
-import static com.example.types.enums.ResultStatus.SUCCESS;
+import static com.example.types.enums.ResultStatus.OPERATION_SUCCESS;
 
 public class BaseController {
 
     protected final <T> R<T> success() {
-        return new R<>(SUCCESS.getCode(), SUCCESS.getMsg(), null);
+        return new R<>(OPERATION_SUCCESS.getCode(), OPERATION_SUCCESS.getMsg(), null);
     }
 
     protected final <T> R<T> success(String msg) {
-        return new R<>(SUCCESS.getCode(), msg, null);
+        return new R<>(OPERATION_SUCCESS.getCode(), msg, null);
     }
 
     protected final  <T> R<T> success(T data) {
-        return new R<>(SUCCESS.getCode(), SUCCESS.getMsg(), data);
+        return new R<>(OPERATION_SUCCESS.getCode(), OPERATION_SUCCESS.getMsg(), data);
     }
 
     protected final  <T> R<T> success(String msg, T data) {
-        return new R<>(SUCCESS.getCode(), msg, data);
+        return new R<>(OPERATION_SUCCESS.getCode(), msg, data);
     }
 
     protected final <T> R<T> error() {
