@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 public class BasePo {
 
     @TableField(fill = FieldFill.INSERT)
-    private Integer createBy;
+    private Long createBy;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Integer updateBy;
+    private Long updateBy;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;

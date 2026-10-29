@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SysUserEntity {
 
-    private Integer id;
+    private Long id;
 
     private String username;
 

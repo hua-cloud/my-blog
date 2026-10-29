@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
 public class SysUser extends BasePo {
 
     @TableId(type = IdType.AUTO)
-    private Integer id;
+    private Long id;
 
     private String username;
 

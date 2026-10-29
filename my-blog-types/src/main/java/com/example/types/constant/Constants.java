@@ -4,5 +4,5 @@ public class Constants {
 
     public final static String SPLIT = ",";
 
-    public static final int DEFAULT_OPERATOR_ID = 1;
+    public static final long DEFAULT_OPERATOR_ID = 1L;
 }

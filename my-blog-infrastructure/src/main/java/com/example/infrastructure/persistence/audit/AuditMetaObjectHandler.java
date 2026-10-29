@@ -19,7 +19,7 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         if (ObjUtil.isNotNull(metaObject) && metaObject.getOriginalObject() instanceof BasePo basePo) {
             LocalDateTime now = LocalDateTime.now();
-            Integer operatorId = getCurrentOperatorId();
+            Long operatorId = getCurrentOperatorId();
             basePo.setCreateBy(operatorId);
             basePo.setCreateTime(now);
             basePo.setUpdateBy(operatorId);
@@ -37,7 +37,7 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
         }
     }
 
-    private Integer getCurrentOperatorId() {
-        return StpUtil.isLogin() ? StpUtil.getLoginIdAsInt() : DEFAULT_OPERATOR_ID;
+    private Long getCurrentOperatorId() {
+        return StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : DEFAULT_OPERATOR_ID;
     }
 }
