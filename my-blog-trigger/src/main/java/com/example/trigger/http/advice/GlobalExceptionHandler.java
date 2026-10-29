@@ -7,6 +7,7 @@ import com.example.types.enums.ResultStatus;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,6 +17,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public R<Void> handleUnreadableBody(HttpMessageNotReadableException e) {
+        log.warn("请求体格式或参数值错误");
+        return error("请求体格式或参数取错误");
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public R<Void> handleValidation(MethodArgumentNotValidException e) {
@@ -37,7 +44,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public R<Void> handleIllegalArgument(IllegalArgumentException e) {
-        log.warn("请求参数错误: {}", e.getMessage());
+        log.warn("请求参数不合法: {}", e.getMessage());
         return error(e.getMessage());
     }
 
