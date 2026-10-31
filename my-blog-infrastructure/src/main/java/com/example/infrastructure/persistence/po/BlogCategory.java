@@ -2,19 +2,19 @@ package com.example.infrastructure.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
-/** 审计字段显式写入，避免将用例传入的操作者替换为线程中的登录身份。 */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @TableName("blog_category")
-public class CategoryPo {
+public class BlogCategory extends BasePo {
+
     @TableId(type = IdType.AUTO)
     private Long id;
+
     private String name;
+
     private String description;
+
     private Integer sortOrder;
-    private Long createBy;
-    private LocalDateTime createTime;
-    private Long updateBy;
-    private LocalDateTime updateTime;
 }

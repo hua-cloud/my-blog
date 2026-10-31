@@ -1,4 +1,4 @@
-package com.example.api.content.dto;
+package com.example.api.dto;
 
 import com.example.types.page.PageQuery;
 

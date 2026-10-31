@@ -1,28 +1,29 @@
 package com.example.trigger.http;
 
-import com.example.api.content.dto.CategoryQueryRequestDTO;
-import com.example.api.content.dto.CategoryResponseDTO;
-import com.example.api.content.dto.SaveCategoryRequestDTO;
+import com.example.api.dto.CategoryQueryRequestDTO;
+import com.example.api.dto.CategoryResponseDTO;
+import com.example.api.dto.SaveCategoryRequestDTO;
 import com.example.api.response.R;
-import com.example.domain.content.service.CategoryApplicationService;
+import com.example.domain.content.service.BlogCategoryService;
 import com.example.domain.content.service.command.SaveCategoryCommand;
 import com.example.domain.content.query.model.CategoryQuery;
 import com.example.domain.content.query.model.CategoryView;
 import com.example.trigger.http.security.LoginHelper;
 import com.example.types.page.PageResult;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/categories")
-public class CategoryController extends BaseController {
-    private final CategoryApplicationService service;
+@RequestMapping("/admin/category")
+@RequiredArgsConstructor
+public class BlogCategoryController extends BaseController {
 
-    public CategoryController(CategoryApplicationService service) { this.service = service; }
+    private final BlogCategoryService service;
 
     @PostMapping
-    public R<Long> create(@Valid @RequestBody SaveCategoryRequestDTO request) {
-        return success(service.create(toCommand(request), LoginHelper.getUserId()));
+    public R<Void> create(@Valid @RequestBody SaveCategoryRequestDTO requestDTO) {
+        return success(service.create(toCommand(requestDTO), LoginHelper.getUserId()));
     }
 
     @PutMapping("/{id}")
@@ -52,10 +53,10 @@ public class CategoryController extends BaseController {
     }
 
     private SaveCategoryCommand toCommand(SaveCategoryRequestDTO request) {
-        return new SaveCategoryCommand(request.name(), request.description(), request.sortOrder());
+        return new SaveCategoryCommand(request.getName(), request.getDescription(), request.getSortOrder());
     }
 
     private CategoryResponseDTO toDTO(CategoryView view) {
-        return new CategoryResponseDTO(view.id(), view.name(), view.description(), view.sortOrder());
+        return new CategoryResponseDTO(view.getId(), view.getName(), view.getDescription(), view.getSortOrder());
     }
 }
