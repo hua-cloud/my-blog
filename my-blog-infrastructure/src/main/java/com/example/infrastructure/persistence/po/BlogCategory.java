@@ -8,7 +8,6 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@AutoMapper(target = BlogCategoryEntity.class, reverseConvertGenerate = false)
 @TableName("blog_category")
 @AutoMapper(target = BlogCategoryEntity.class)
 public class BlogCategory extends BasePo {
