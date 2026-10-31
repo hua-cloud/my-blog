@@ -37,21 +37,18 @@ public class BlogCategoryController {
     @PostMapping
     public R<Void> create(@Validated(AddGroup.class) @RequestBody BlogCategoryRequestDTO requestDTO) {
         BlogCategoryEntity converted = MapstructUtils.convert(requestDTO, BlogCategoryEntity.class);
-        categoryService.create(converted);
-        return R.success();
+        return R.operation(categoryService.create(converted));
     }
 
     @PutMapping("/{id}")
     public R<Void> update(@PathVariable("id") Long id, @Validated(UpdateGroup.class) @RequestBody BlogCategoryRequestDTO requestDTO) {
         BlogCategoryEntity converted = MapstructUtils.convert(requestDTO, BlogCategoryEntity.class);
         converted.setId(id);
-        categoryService.update(converted);
-        return R.success();
+        return R.operation(categoryService.update(converted));
     }
 
     @DeleteMapping("/{id}")
     public R<Void> delete(@PathVariable("id") Long id) {
-        categoryService.delete(id);
-        return R.success();
+        return R.operation(categoryService.delete(id));
     }
 }
