@@ -1,27 +1,25 @@
 package com.example.infrastructure.persistence.converter;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.types.page.PageQuery;
-import com.example.types.page.PageResult;
+import com.example.types.core.PageQuery;
+import com.example.types.core.PageResult;
 
-import java.util.Objects;
-import java.util.function.Function;
+import java.util.List;
+
+import static com.example.types.constant.Constants.DEFAULT_PAGE_NUM;
+import static com.example.types.constant.Constants.DEFAULT_PAGE_SIZE;
 
 /** MyBatis-Plus 分页类型仅在基础设施内部使用。 */
 public final class PageConverter {
 
     public static <T> Page<T> toPage(PageQuery query) {
-        Objects.requireNonNull(query, "query 不能为空");
-        return new Page<>(query.getPageNum(), query.getPageSize(), true);
+        Integer actualPageNum = ObjUtil.defaultIfNull(query.getPageNum(), DEFAULT_PAGE_NUM);
+        Integer actualPageSize = ObjUtil.defaultIfNull(query.getPageSize(), DEFAULT_PAGE_SIZE);
+        return new Page<>(actualPageNum, actualPageSize);
     }
 
-    public static <T> PageResult<T> toResult(IPage<T> page) {
-        Objects.requireNonNull(page, "page 不能为空");
-        return PageResult.of(page.getRecords(), page.getTotal(), (int) page.getCurrent(), (int) page.getSize());
-    }
-
-    public static <S, T> PageResult<T> toResult(IPage<S> page, Function<? super S, ? extends T> mapper) {
-        return toResult(page).map(mapper);
+    public static <T> PageResult<T> toResult(List<T> records, long total) {
+        return PageResult.of(records, total);
     }
 }

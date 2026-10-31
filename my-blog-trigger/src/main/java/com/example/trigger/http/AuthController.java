@@ -2,11 +2,11 @@ package com.example.trigger.http;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
-import com.example.api.dto.LoginRequestDTO;
-import com.example.api.dto.LoginResponseDTO;
-import com.example.api.response.R;
+import com.example.domain.auth.model.dto.LoginRequestDTO;
+import com.example.domain.auth.model.dto.LoginResponseDTO;
 import com.example.domain.auth.model.entity.SysUserEntity;
 import com.example.domain.auth.service.IAuthService;
+import com.example.types.core.R;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-public class AuthController extends BaseController {
+public class AuthController {
 
     private final IAuthService authService;
 
@@ -32,12 +32,12 @@ public class AuthController extends BaseController {
                 .tokenName(tokenInfo.getTokenName())
                 .tokenValue(tokenInfo.getTokenValue())
                 .build();
-       return success("登录成功", responseDTO);
+        return R.success("登录成功", responseDTO);
     }
 
     @PostMapping("/logout")
     public R<Void> logout() {
         StpUtil.logout();
-        return success("注销成功");
+        return R.success("注销成功");
     }
 }

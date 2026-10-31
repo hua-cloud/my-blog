@@ -1,62 +1,57 @@
 package com.example.trigger.http;
 
-import com.example.api.dto.CategoryQueryRequestDTO;
-import com.example.api.dto.CategoryResponseDTO;
-import com.example.api.dto.SaveCategoryRequestDTO;
-import com.example.api.response.R;
+import com.example.domain.content.model.dto.BlogCategoryRequestDTO;
+import com.example.domain.content.model.dto.BlogCategoryResponseDTO;
+import com.example.domain.content.model.entity.BlogCategoryEntity;
 import com.example.domain.content.service.BlogCategoryService;
-import com.example.domain.content.service.command.SaveCategoryCommand;
-import com.example.domain.content.query.model.CategoryQuery;
-import com.example.domain.content.query.model.CategoryView;
-import com.example.trigger.http.security.LoginHelper;
-import com.example.types.page.PageResult;
-import jakarta.validation.Valid;
+import com.example.types.core.R;
+import com.example.types.core.PageQuery;
+import com.example.types.core.PageResult;
+import com.example.types.utils.MapstructUtils;
+import com.example.types.valid.AddGroup;
+import com.example.types.valid.UpdateGroup;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @RestController
 @RequestMapping("/admin/category")
 @RequiredArgsConstructor
-public class BlogCategoryController extends BaseController {
+public class BlogCategoryController {
 
-    private final BlogCategoryService service;
+    private final BlogCategoryService categoryService;
+
+    @GetMapping("/{id}")
+    public R<BlogCategoryResponseDTO> detail(@PathVariable("id") Long id) {
+        BlogCategoryEntity entity = categoryService.detail(id);
+        BlogCategoryResponseDTO converted = MapstructUtils.convert(entity, BlogCategoryResponseDTO.class);
+        return R.success(converted);
+    }
+
+    @GetMapping("/page")
+    public R<PageResult<BlogCategoryResponseDTO>> page(BlogCategoryRequestDTO requestDTO, PageQuery pageQuery) {
+        return R.success(categoryService.page(requestDTO.getSearchKeyword(), pageQuery));
+    }
 
     @PostMapping
-    public R<Void> create(@Valid @RequestBody SaveCategoryRequestDTO requestDTO) {
-        return success(service.create(toCommand(requestDTO), LoginHelper.getUserId()));
+    public R<Void> create(@Validated(AddGroup.class) @RequestBody BlogCategoryRequestDTO requestDTO) {
+        BlogCategoryEntity converted = MapstructUtils.convert(requestDTO, BlogCategoryEntity.class);
+        categoryService.create(converted);
+        return R.success();
     }
 
     @PutMapping("/{id}")
-    public R<Void> update(@PathVariable("id") Long id, @Valid @RequestBody SaveCategoryRequestDTO request) {
-        service.update(id, toCommand(request), LoginHelper.getUserId());
-        return success();
-    }
-
-    @GetMapping("/{id}")
-    public R<CategoryResponseDTO> detail(@PathVariable("id") Long id) {
-        return success(toDTO(service.detail(id)));
-    }
-
-    @GetMapping
-    public R<PageResult<CategoryResponseDTO>> page(@ModelAttribute CategoryQueryRequestDTO request) {
-        CategoryQuery query = new CategoryQuery();
-        query.setPageNum(request.getPageNum());
-        query.setPageSize(request.getPageSize());
-        query.setKeyword(request.getKeyword());
-        return success(service.page(query).map(this::toDTO));
+    public R<Void> update(@PathVariable("id") Long id, @Validated(UpdateGroup.class) @RequestBody BlogCategoryRequestDTO requestDTO) {
+        BlogCategoryEntity converted = MapstructUtils.convert(requestDTO, BlogCategoryEntity.class);
+        converted.setId(id);
+        categoryService.update(converted);
+        return R.success();
     }
 
     @DeleteMapping("/{id}")
     public R<Void> delete(@PathVariable("id") Long id) {
-        service.delete(id);
-        return success();
-    }
-
-    private SaveCategoryCommand toCommand(SaveCategoryRequestDTO request) {
-        return new SaveCategoryCommand(request.getName(), request.getDescription(), request.getSortOrder());
-    }
-
-    private CategoryResponseDTO toDTO(CategoryView view) {
-        return new CategoryResponseDTO(view.getId(), view.getName(), view.getDescription(), view.getSortOrder());
+        categoryService.delete(id);
+        return R.success();
     }
 }

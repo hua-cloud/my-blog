@@ -1,13 +1,15 @@
-package com.example.api.dto;
+package com.example.domain.content.model.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-public class CategoryResponseDTO {
+@NoArgsConstructor
+public class BlogCategoryEntity {
 
     private Long id;
 

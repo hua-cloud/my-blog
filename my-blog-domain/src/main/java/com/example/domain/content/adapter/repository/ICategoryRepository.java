@@ -1,15 +1,18 @@
 package com.example.domain.content.adapter.repository;
 
-import com.example.domain.content.model.entity.Category;
-import com.example.domain.content.query.model.CategoryQuery;
-import com.example.types.page.PageResult;
-import java.util.Optional;
+import com.example.domain.content.model.entity.BlogCategoryEntity;
+import com.example.types.core.PageQuery;
+import com.example.types.core.PageResult;
 
 public interface ICategoryRepository {
-    Optional<Category> findById(Long id);
-    PageResult<Category> page(CategoryQuery query);
-    Long create(Category category, Long operatorId);
-    void update(Category category, Long operatorId);
-    void delete(Long id);
-    boolean existsByName(String name, Long excludingId);
+
+    BlogCategoryEntity selectById(Long id);
+
+    PageResult<BlogCategoryEntity> page(String searchKeyword, PageQuery query);
+
+    int save(BlogCategoryEntity categoryEntity);
+
+    int update(BlogCategoryEntity categoryEntity);
+
+    int delete(Long id);
 }
