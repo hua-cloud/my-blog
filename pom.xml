@@ -14,7 +14,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>my-blog-api</module>
         <module>my-blog-app</module>
         <module>my-blog-domain</module>
         <module>my-blog-trigger</module>
@@ -32,6 +31,7 @@
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
         <hutool.version>5.8.26</hutool.version>
         <sa-token.version>1.45.0</sa-token.version>
+        <mapstruct-plus.version>1.5.0</mapstruct-plus.version>
     </properties>
 
     <dependencyManagement>
@@ -74,12 +74,14 @@
                 <version>${sa-token.version}</version>
             </dependency>
 
-            <!-- 工程模块 -->
+            <!-- MapStruct-plus 对象转换 -->
             <dependency>
-                <groupId>com.example</groupId>
-                <artifactId>my-blog-api</artifactId>
-                <version>1.0</version>
+                <groupId>io.github.linpeilie</groupId>
+                <artifactId>mapstruct-plus-spring-boot-starter</artifactId>
+                <version>${mapstruct-plus.version}</version>
             </dependency>
+
+            <!-- 工程模块 -->
             <dependency>
                 <groupId>com.example</groupId>
                 <artifactId>my-blog-domain</artifactId>
