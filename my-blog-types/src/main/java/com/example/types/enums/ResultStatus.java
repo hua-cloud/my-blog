@@ -16,6 +16,9 @@ public enum ResultStatus {
     OPERATION_FAILED(1001, "操作失败"),
 
     BAD_CREDENTIALS(2002, "用户名或密码错误"),
+    CATEGORY_NOT_FOUND(3001, "分类不存在"),
+    CATEGORY_NAME_EXISTS(3002, "分类名称已存在"),
+    CATEGORY_IN_USE(3003, "该分类下还有文章，无法删除"),
     ;
 
     private final int code;
