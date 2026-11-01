@@ -5,6 +5,7 @@ import com.example.types.valid.AddGroup;
 import com.example.types.valid.UpdateGroup;
 import io.github.linpeilie.annotations.AutoMapper;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -17,6 +18,10 @@ public class BlogTagRequestDTO implements Serializable {
     @NotBlank(message = "标签名称不能为空", groups = { AddGroup.class, UpdateGroup.class })
     @Size(max = 64, message = "标签名称长度不能超过64", groups = { AddGroup.class, UpdateGroup.class })
     private String name;
+
+    @NotBlank(message = "标签主题色不能为空", groups = { AddGroup.class, UpdateGroup.class })
+    @Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "标签主题色必须为#RRGGBB格式", groups = { AddGroup.class, UpdateGroup.class })
+    private String color;
 
     private String searchKeyword;
 }

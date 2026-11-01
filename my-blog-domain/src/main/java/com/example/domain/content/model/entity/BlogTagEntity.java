@@ -17,4 +17,6 @@ public class BlogTagEntity {
     private Long id;
 
     private String name;
+
+    private String color;
 }

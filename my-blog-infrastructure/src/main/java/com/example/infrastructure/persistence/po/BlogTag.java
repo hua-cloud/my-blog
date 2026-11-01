@@ -16,4 +16,6 @@ public class BlogTag extends BasePo {
     private Long id;
 
     private String name;
+
+    private String color;
 }

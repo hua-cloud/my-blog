@@ -45,6 +45,7 @@ DROP TABLE IF EXISTS blog_tag;
 CREATE TABLE blog_tag (
     id BIGINT AUTO_INCREMENT COMMENT '标签ID',
     name VARCHAR(64) NOT NULL COMMENT '标签名称',
+    color VARCHAR(7) NOT NULL COMMENT '标签主题色，格式#RRGGBB',
     create_by BIGINT NULL COMMENT '创建人',
     create_time DATETIME NULL COMMENT '创建时间',
     update_by BIGINT NULL COMMENT '修改人',

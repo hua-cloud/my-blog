@@ -68,6 +68,7 @@ public class BlogTagRepository implements IBlogTagRepository {
         try {
             LambdaUpdateWrapper<BlogTag> luw = Wrappers.lambdaUpdate();
             luw.set(StrUtil.isNotBlank(converted.getName()), BlogTag::getName, converted.getName())
+                    .set(StrUtil.isNotBlank(converted.getColor()), BlogTag::getColor, converted.getColor())
                     .eq(BlogTag::getId, converted.getId());
             return tagMapper.update(new BlogTag(), luw);
         } catch (DuplicateKeyException e) {
