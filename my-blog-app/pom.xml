@@ -23,6 +23,14 @@
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
 
+        <!-- 仅 application-dev.yml 使用代理驱动，生产环境仍直连 MySQL。 -->
+        <dependency>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+            <version>3.9.1</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-spring-boot3-starter</artifactId>

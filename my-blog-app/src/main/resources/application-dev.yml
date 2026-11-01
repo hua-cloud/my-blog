@@ -12,8 +12,8 @@ thread:
 # 数据库配置；启动时配置数据库资源信息
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/my_blog_dev?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://${DB_HOST}:${DB_PORT}/my_blog_dev?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     type: com.zaxxer.hikari.HikariDataSource
