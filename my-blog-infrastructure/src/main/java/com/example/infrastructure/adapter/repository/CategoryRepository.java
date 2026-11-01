@@ -47,7 +47,7 @@ public class CategoryRepository implements ICategoryRepository {
                 .like(BlogCategory::getDescription, searchKeyword)
         );
         if (query.isValidOrder(BlogCategory.class)) {
-            qw.orderBy(true, query.getIsAsc(), query.getOrderColumn());
+            qw.orderBy(true, query.getIsAsc(), StrUtil.toUnderlineCase(query.getOrderColumn()));
         } else {
             qw.lambda().orderByAsc(BlogCategory::getSortOrder);
         }
@@ -72,10 +72,10 @@ public class CategoryRepository implements ICategoryRepository {
         try {
             LambdaUpdateWrapper<BlogCategory> luw = Wrappers.lambdaUpdate();
             luw.set(StrUtil.isNotBlank(converted.getName()), BlogCategory::getName, converted.getName())
-                    .set(StrUtil.isNotBlank(converted.getDescription()), BlogCategory::getDescription, converted.getDescription())
+                    .set(ObjUtil.isNotNull(converted.getDescription()), BlogCategory::getDescription, converted.getDescription())
                     .set(ObjUtil.isNotNull(converted.getSortOrder()), BlogCategory::getSortOrder, converted.getSortOrder())
                     .eq(BlogCategory::getId, converted.getId());
-            return categoryMapper.update(luw);
+            return categoryMapper.update(new BlogCategory(), luw);
         } catch (DuplicateKeyException e) {
             throw new AppException(CATEGORY_NAME_EXISTS);
         }

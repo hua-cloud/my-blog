@@ -1,5 +1,6 @@
 package com.example.types.core;
 
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,14 +24,14 @@ public class PageQuery {
     private String orderType;
 
     public boolean isValidOrder(Class<?> clazz) {
-        Set<String> fieldNames = Arrays.stream(clazz.getFields())
+        Set<String> fieldNames = Arrays.stream(ReflectUtil.getFields(clazz))
                 .map(Field::getName)
                 .collect(Collectors.toSet());
         return StrUtil.isNotBlank(orderColumn) && StrUtil.isNotBlank(orderType) && fieldNames.contains(orderColumn);
     }
 
     public boolean getIsAsc() {
-        return "asc".equals(orderColumn);
+        return "asc".equals(orderType);
     }
 }
 

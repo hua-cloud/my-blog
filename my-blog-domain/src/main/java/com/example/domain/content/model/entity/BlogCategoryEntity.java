@@ -20,5 +20,5 @@ public class BlogCategoryEntity {
 
     private String description;
 
-    private int sortOrder;
+    private Integer sortOrder;
 }

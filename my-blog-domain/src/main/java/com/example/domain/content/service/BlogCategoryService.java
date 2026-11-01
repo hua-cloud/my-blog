@@ -1,8 +1,10 @@
 package com.example.domain.content.service;
 
+import cn.hutool.core.util.ObjUtil;
 import com.example.domain.content.adapter.repository.ICategoryRepository;
 import com.example.domain.content.model.dto.BlogCategoryResponseDTO;
 import com.example.domain.content.model.entity.BlogCategoryEntity;
+import com.example.types.core.AppException;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
 import com.example.types.utils.MapstructUtils;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.example.types.enums.ResultStatus.CATEGORY_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +23,11 @@ public class BlogCategoryService implements IBlogCategoryService {
 
     @Override
     public BlogCategoryEntity detail(Long id) {
-        return categoryRepository.selectById(id);
+        BlogCategoryEntity entity = categoryRepository.selectById(id);
+        if (ObjUtil.isNull(entity)) {
+            throw new AppException(CATEGORY_NOT_FOUND);
+        }
+        return entity;
     }
 
     @Override
