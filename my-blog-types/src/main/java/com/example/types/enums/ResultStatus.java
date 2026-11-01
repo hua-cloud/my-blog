@@ -19,6 +19,9 @@ public enum ResultStatus {
 
     CATEGORY_NOT_FOUND(3001, "分类不存在"),
     CATEGORY_NAME_EXISTS(3002, "分类名称已存在"),
+
+    TAG_NOT_FOUND(4001, "标签不存在"),
+    TAG_NAME_EXISTS(4002, "标签名称已存在"),
     ;
 
     private final int code;

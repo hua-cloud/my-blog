@@ -1,7 +1,7 @@
 package com.example.domain.content.service;
 
 import cn.hutool.core.util.ObjUtil;
-import com.example.domain.content.adapter.repository.ICategoryRepository;
+import com.example.domain.content.adapter.repository.IBlogCategoryRepository;
 import com.example.domain.content.model.dto.BlogCategoryResponseDTO;
 import com.example.domain.content.model.entity.BlogCategoryEntity;
 import com.example.types.core.AppException;
@@ -19,7 +19,7 @@ import static com.example.types.enums.ResultStatus.CATEGORY_NOT_FOUND;
 @RequiredArgsConstructor
 public class BlogCategoryService implements IBlogCategoryService {
 
-    private final ICategoryRepository categoryRepository;
+    private final IBlogCategoryRepository categoryRepository;
 
     @Override
     public BlogCategoryEntity detail(Long id) {

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.domain.content.adapter.repository.ICategoryRepository;
+import com.example.domain.content.adapter.repository.IBlogCategoryRepository;
 import com.example.domain.content.model.entity.BlogCategoryEntity;
 import com.example.infrastructure.persistence.mapper.IBlogCategoryMapper;
 import com.example.infrastructure.persistence.converter.PageConverter;
@@ -25,7 +25,7 @@ import static com.example.types.enums.ResultStatus.CATEGORY_NAME_EXISTS;
 
 @Repository
 @RequiredArgsConstructor
-public class CategoryRepository implements ICategoryRepository {
+public class BlogCategoryRepository implements IBlogCategoryRepository {
 
     private final IBlogCategoryMapper categoryMapper;
 

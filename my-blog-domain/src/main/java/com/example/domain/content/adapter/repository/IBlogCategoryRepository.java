@@ -4,7 +4,7 @@ import com.example.domain.content.model.entity.BlogCategoryEntity;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
 
-public interface ICategoryRepository {
+public interface IBlogCategoryRepository {
 
     BlogCategoryEntity selectById(Long id);
 
