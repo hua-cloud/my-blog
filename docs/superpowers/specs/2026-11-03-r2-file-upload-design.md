@@ -158,7 +158,7 @@ MIME 用于描述和 HTTP 响应，不作为首版上传准入条件。对内容
 
 | 模块 | 内容（建议名） | 职责 |
 | --- | --- | --- |
-| app | `R2StorageProperties`、`R2StorageConfig` | 绑定并校验配置，装配单例客户端与短事务执行器 |
+| app | `R2StorageProperties`、`R2StorageConfig` | 绑定配置，装配单例客户端与短事务执行器 |
 | trigger | `BlogFileController` | 认证后的单文件 multipart 适配，转换普通 Java 上传源，返回 `R<FileUploadResponseDTO>` |
 | domain.file.service | `FileService` | 校验、策略调用、key 生成、上传与事务编排、补偿 |
 | domain.file.model | `FileUploadSource`、`FileAsset`、`StorageLocation`、响应 DTO | 文件输入、持久化数据与输出结果 |
@@ -234,7 +234,7 @@ file:
 
 - 凭据使用 R2 提供的 Access Key ID / Secret Access Key，限定目标 Bucket 对象读写权限。
 - endpoint 复制控制台值，普通桶通常是 `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`，有区域管辖限制时使用其对应端点。
-- 必填值缺失或非法时启动失败并明确指出配置名；不提供虚假默认凭据，不在 Bean 初始化时联网列桶或写测试对象。
+- 按用户后续调整，配置属性类仅负责配置绑定，不添加 Bean Validation 注解或手动的 endpoint/桶名校验。配置由配置文件维护；不提供虚假默认凭据，不在 Bean 初始化时联网列桶或写测试对象。URI 解析及 SDK 本身的参数检查照常生效，不额外包装成配置校验逻辑。
 - region 固定 `auto`，path-style 开启，`chunkedEncodingEnabled(false)`；单例 S3Client 由容器关闭。
 - 客户端配置连接超时 5 秒、单次尝试 30 秒、总 API 调用 60 秒。首版关闭 PutObject 的 SDK 自动网络重试（仅 1 次尝试），避免条件创建在成功响应丢失后重试变成 412 而误判为旧 key 冲突；明确 412 的 key 冲突重试按第 4 节由用例单独完成。补偿 DeleteObject 可保留有限重试。这些是设计默认值，实施时在具体 SDK/HTTP client 上落实。
 - 已知长度上传；MIME 和对象内容保持一致，不设置 public-read ACL。
@@ -299,7 +299,7 @@ location ^~ /file/ {
 6. R2 明确失败不写库；条件冲突不覆盖旧对象；碰撞重试只消费本次可重开的输入源。
 7. 数据库插入失败、确定提交失败触发正确补偿；补偿失败保留原异常并记录清理位置。
 8. 提交结果未知时保留已提交对象或留待核查，不盲删；响应失败不会回删已提交文件。
-9. 新增异常映射符合 `R` 约定，错误响应不泄露密钥；S3Client 生命周期与配置校验正确。
+9. 新增异常映射符合 `R` 约定，错误响应不泄露密钥；S3Client 生命周期与配置绑定正确。
 
 ### 12.2 真实环境验收（实施后执行，本次尚未执行）
 

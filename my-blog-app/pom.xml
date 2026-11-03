@@ -12,6 +12,16 @@
     <packaging>jar</packaging>
 
     <dependencies>
+        <!-- app 直接装配客户端，显式声明 SDK 与同步 HTTP transport。 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
