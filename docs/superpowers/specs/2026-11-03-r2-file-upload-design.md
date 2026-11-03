@@ -1,9 +1,9 @@
 # R2 文件上传与 Nginx 稳定资源路径设计
 
 - 日期：2026-11-03
-- 状态：需求与方案已确认；详细设计已通过独立 builder check，待用户审阅，尚未实施。
+- 状态：2026-11-03 按用户要求将资源访问修订为 Nginx 302；修订已通过独立 builder check，待用户审阅，尚未实施。
 - 范围：现有 Java 项目接入 Cloudflare R2，只新增一个文件上传接口；交付配套 Nginx 部署配置说明。
-- 本文优先于早期 R2 调研报告以及既有领域设计中 `/files/{id}` 读取入口的建议。此次选择 `/file/<对象键后缀>` 直接代理，不增加 Java 文件读取接口。
+- 本文优先于早期 R2 调研报告以及既有领域设计中 `/files/{id}` 读取入口的建议。此次选择 `/file/<对象键后缀>` 由 Nginx 直接返回 302，浏览器从公开资源域名获取文件，不增加 Java 文件读取接口。
 
 ## 1. 目的与已确认需求
 
@@ -15,11 +15,11 @@
 2. 一次接口调用完成 R2 上传和数据库记录写入，二者都成功后才返回成功。
 3. 首版预留文件类型限制的扩展位置，但不因扩展名或 MIME 类型拒绝文件。
 4. 对外返回 `/file/...` 形式的站点根路径；文章以后可以保存该路径，避免重复存储上游域名。
-5. Nginx 将该路径代理到 R2 公开资源域名，图片字节经过 Nginx 返回浏览器，无 Java 查库或签名重定向。
-6. 将来替换资源域名时调整 Nginx 上游；存储迁移时仍需复制对象并保持 key 不变。
+5. Nginx 对该路径直接返回 HTTP 302，Location 指向 R2 公开资源域名；浏览器自动请求目标地址，图片字节由 R2/Cloudflare 发送，不经过站点服务器，无 Java 查库或签名生成。
+6. 将来替换资源域名时调整 Nginx 重定向目标；存储迁移时仍需复制对象并保持 key 不变。
 7. 草稿图片权限、文章模块和正文处理本轮不考虑。
 
-用户当前没有绑定 R2 公开资源域名。真实上传只需要 S3 endpoint 和凭据；通过 `/file/` 预览还需要可公开读取的上游及前端入口代理，这两项应独立验收。
+用户当前没有绑定 R2 公开资源域名。真实上传只需要 S3 endpoint 和凭据；通过 `/file/` 预览还需要可公开读取的目标域名及前端入口重定向，这两项应独立验收。
 
 ## 2. 范围与约束
 
@@ -30,7 +30,7 @@
 - 文件大小、非空和元数据长度检查；类型策略扩展点。
 - R2 对象存储、MySQL 元数据持久化、失败补偿。
 - 返回 fileId、objectKey、稳定 url、原名、MIME、字节数。
-- 一份含路径规则、Host、SNI 和验证方法的 Nginx 配置样例。
+- 一份含路径保留、302 Location、重定向缓存与验证方法的 Nginx 配置样例。
 
 ### 2.2 不包含的能力
 
@@ -67,9 +67,10 @@
 | --- | --- | --- |
 | 正文保存资源域名完整 URL | 浏览器直接使用 CDN；上游域名进入内容 | 用户不选用 |
 | `/files/{id}` 查库后签名并 302 | 可按 ID 解析位置；每次访问引入应用与临时授权 | 用户不选用，本轮无访问授权需求 |
-| `/file/...` 由 Nginx 直接代理公开 R2 域名 | 内容只保存路径，域名由代理配置管理；图片流量经过站点服务器 | 用户明确选用 |
+| `/file/...` 由 Nginx 反向代理公开 R2 域名 | 内容只保存路径；图片流量经过站点服务器，受其出站带宽限制 | 用户原选方案，现已被 302 方案替代 |
+| `/file/...` 由 Nginx 返回 302 到公开 R2 域名 | 内容保留稳定路径；站点只返回小响应，浏览器直接从 Cloudflare 获取图片；首次读取多一次重定向 | 用户本次明确选用 |
 
-S3 写入端点与公开读取上游分开：Java 上传访问 R2 S3 endpoint，Nginx 读取访问公开自定义域名。R2 S3 endpoint 不能仅靠普通无签名反代就公开读取私有对象。[R2 公开 Bucket 文档](https://developers.cloudflare.com/r2/buckets/public-buckets/)
+S3 写入端点与公开读取域名分开：Java 上传访问 R2 S3 endpoint，Nginx 只生成公开自定义域名下的 Location，浏览器请求该目标。把私有 S3 endpoint 放入 Location 不能获得无签名公开读取能力；目标必须已经公开可读。[R2 公开 Bucket 文档](https://developers.cloudflare.com/r2/buckets/public-buckets/)
 
 ## 4. 资源身份与路径契约
 
@@ -81,9 +82,9 @@ S3 写入端点与公开读取上游分开：Java 上传访问 R2 S3 endpoint，
 | `blog_file.storage_key` | 同上 | 保存完整桶内 key，不包含桶名或域名 |
 | 返回 `objectKey` | 同上 | 与数据库字段含义一致 |
 | 返回 `url` | `/file/2026/11/03/18a4d21c315249218fe455f3d978d213.png` | `"/" + objectKey`，不再重复拼 `/file/` |
-| Nginx 上游 URL | `https://assets.example.com/file/2026/11/03/18a4d21c315249218fe455f3d978d213.png` | 公开域名加原请求路径，不剥离前缀 |
+| Nginx 302 Location | `https://assets.example.com/file/2026/11/03/18a4d21c315249218fe455f3d978d213.png` | 固定公开域名加原请求路径，不剥离前缀；由浏览器请求 |
 
-`url` 是从站点根开始的路径，不是相对当前文章目录的路径，也不是按数据库 ID 查找的地址。任意前端页面渲染它时，其所在站点都需要实现相同的 `/file/` 代理契约。
+`url` 是从站点根开始的路径，不是相对当前文章目录的路径，也不是按数据库 ID 查找的地址。任意前端页面渲染它时，其所在站点都需要实现相同的 `/file/` 302 契约。前端将该路径赋给 img 的 src 或插入 Markdown，浏览器自动跟随重定向，无需前端手动跳转页面。
 
 对象 key 由服务端生成：`file/yyyy/MM/dd/<无连字符UUID>[.<安全扩展名>]`。日期取服务端配置时区，采用注入 Clock 便于测试；生产与开发按 Asia/Shanghai 对齐。扩展名只取最后一个后缀，限定为不超过 16 位 ASCII 字母/数字并转小写，不合规则省略。**这只是生成安全名称，不是文件类型允许列表，不影响文件上传是否接受。**
 
@@ -121,7 +122,7 @@ S3 写入端点与公开读取上游分开：Java 上传访问 R2 S3 endpoint，
 }
 ```
 
-仅在元数据事务提交后构造成功响应；fileId 必须是数据库生成的主键，不是 insert 的受影响行数。域名、R2 凭据、桶名、临时签名和过期时间不进入响应。`url` 保持不含签名；对象或代理不可用时仍可能加载失败，接口不承诺“永久在线”。
+仅在元数据事务提交后构造成功响应；fileId 必须是数据库生成的主键，不是 insert 的受影响行数。域名、R2 凭据、桶名、临时签名和过期时间不进入响应。`url` 保持不含签名；对象、重定向入口或目标域名不可用时仍可能加载失败，接口不承诺“永久在线”。
 
 当前调用方对 Long 主键的处理沿用项目既有约定；后续若进入 JavaScript 安全整数之外，统一规划 ID 序列化，不在此模块单独更改协议。
 
@@ -215,7 +216,7 @@ Maven：根 POM 引入 AWS SDK BOM 固定明确 2.x 版本，基础设施引入 
 | create_by / update_by | 现有审计填充器读取登录用户 |
 | create_time / update_time | 现有审计填充器生成当前时间 |
 
-首版不新增 url 列。`url` 可以由 key 推导，资源域名归代理配置管理。文件表无存储定位唯一索引，本次使用条件对象写入及随机 key；未来加唯一索引应独立增量迁移。
+首版不新增 url 列。`url` 可以由 key 推导，资源域名归 Nginx 重定向配置管理。文件表无存储定位唯一索引，本次使用条件对象写入及随机 key；未来加唯一索引应独立增量迁移。
 
 ## 10. R2 配置与客户端
 
@@ -243,57 +244,47 @@ file:
 
 ## 11. Nginx 部署契约
 
-### 11.1 生产资源代理示例
+### 11.1 生产资源 302 示例
 
-以下片段放入站点已有 server 配置。`assets.example.com` 替换为实际 R2 公开资源域名；CA bundle 路径按部署系统调整。本次不直接修改服务器配置。
+以下片段放入站点已有 server 配置。`assets.example.com` 替换为实际 R2 公开资源域名。本次不直接修改服务器配置。
 
 ```nginx
 location ^~ /file/ {
-    # 不带 URI 和尾部 /，保留完整 /file/... 路径。
-    proxy_pass https://assets.example.com;
-    proxy_http_version 1.1;
-    proxy_set_header Host assets.example.com;
-    proxy_set_header Connection "";
-    proxy_set_header Authorization "";
-    proxy_set_header Cookie "";
+    # return 在 rewrite 阶段执行，方法检查也在该阶段先完成。
+    if ($request_method !~ ^(GET|HEAD)$) { return 405; }
 
-    proxy_ssl_server_name on;
-    proxy_ssl_name assets.example.com;
-    proxy_ssl_verify on;
-    proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+    # 不缓存目标映射，调整资源域名后下一次访问使用新配置。
+    add_header Cache-Control "no-store" always;
 
-    proxy_connect_timeout 5s;
-    proxy_read_timeout 30s;
-    limit_except GET { deny all; }  # GET 同时允许 HEAD。
-
-    add_header X-Content-Type-Options nosniff always;
-    add_header Content-Security-Policy "sandbox; default-src 'none'" always;
+    # 保留完整 /file/... 和原查询串；域名固定，不取自请求参数。
+    return 302 https://assets.example.com$request_uri;
 }
 ```
 
-不附加 `/` 的 proxy_pass 保留完整 key 路径。配置不得将未知文件转入 SPA 的 index.html，也不应把文件域名指回当前站点形成循环。固定上游域名部署后需验证 DNS 解析；DNS 记录变更后按运维流程重新解析/重载，动态解析策略留给实际 Nginx 版本与环境决定。[Nginx proxy_pass / HTTPS 配置](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
+`$request_uri` 保留原请求路径及编码和查询串。key 由后端生成安全 ASCII 路径，不剥离 `/file/`，不拼接客户端传入的目标域名或 URL 参数。return 302 直接生成响应，Nginx 不建立到 R2 的连接，因此这里没有 proxy_pass、上游 Host/SNI、CA 或 DNS resolver 配置；目标域名的解析和 HTTPS 校验由浏览器完成。[Nginx return 官方说明](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)
 
-这里的读代理不携带后端上传密钥。它只能读取已经公开的对象；公开域名自身也可以直接访问，因此该方案不以 Nginx 隐藏上游作为权限保证。
+`^~ /file/` 不能落入 SPA 的 index.html，重定向目标不能再返回当前入口形成循环。Nginx 不检查对象是否存在：即使 key 不存在，也先返回 302，由目标域名最终返回 404。该入口不携带 R2 上传凭据；目标域名会出现在浏览器网络请求和 Location 中，这个设计便于更换内容引用的域名，不用于隐藏真实资源地址或控制访问权限。
 
-首版任意类型均可上传，同源公开文件必须同时考虑 HTML/SVG 等可执行内容。以上独立文件 location 设置 nosniff 和 CSP sandbox，抑制文件作为文档打开时取得博客同源脚本能力；普通图片仍可经 img 加载。未知 MIME 为 octet-stream，后续可增加下载 disposition，但不以此拒绝上传。实施验收必须覆盖 HTML/SVG 的响应头，确保错误页或代理规则未覆盖它们。已有 server 安全头的继承应在部署时核查，不因 location 的 add_header 无意丢失必要头。
+文件最终以资源域名的 Origin 返回。博客 Nginx 给 302 响应设置的 Content-Type、CSP 或 nosniff 不会自动变成最终文件响应头；需要的文件头在 R2 对象元数据或资源域名的响应规则中配置。首版任意类型仍可上传，未知 MIME 保持 octet-stream。资源域名不部署博客认证逻辑，博客登录 Cookie 尽量采用 host-only，避免宽泛 Domain Cookie 覆盖资源子域名；浏览器对目标域名适用的 Cookie 按其自身规则发送，不能再通过清空代理请求头来控制。已有 server 安全头的继承仍需在部署时核查，不因 location 的 add_header 无意丢失必要头。
 
 ### 11.2 上传代理与请求大小
 
-`/admin/files/upload` 仍转发 Java 后端。部署者在现有 API location/server 作用域设置 `client_max_body_size 10m`，读取超时至少覆盖后端 60 秒调用及事务时间（建议 90 秒）。Java 再执行单文件 5MB 检查。此请求包含 Authorization；只对公开 `/file/` 读代理清空该头。
+`/admin/files/upload` 仍转发 Java 后端。部署者在现有 API location/server 作用域设置 `client_max_body_size 10m`，读取超时至少覆盖后端 60 秒调用及事务时间（建议 90 秒）。Java 再执行单文件 5MB 检查，上传请求的 Authorization 正常转发。文件访问的 302 不改变上传链路，上传流量仍经过后端。
 
 ### 11.3 开发与上线依赖
 
-- 开发可用显式开启的 R2 `r2.dev` 公开开发地址作为上游，替换 proxy_pass、Host、SNI 三处；它仅用于测试，不作为生产承诺。
-- 前端开发服务器在其浏览器 Origin 下将 `/file/` 代理到同一公开上游或本地 Nginx。仅直接调用 Java 8080 时没有 `/file/` 读取路由，不能期望该路径自动可用。
+- 开发可用显式开启的 R2 `r2.dev` 公开开发地址作为 302 目标，替换 return 中的域名；它仅用于测试，不作为生产承诺。
+- 前端开发服务器在其浏览器 Origin 下对 `/file/` 返回同等 302，或只将入口请求转给本地 Nginx 并把 302 原样传回浏览器，不能在开发代理内自动跟随并下载文件。仅直接调用 Java 8080 时没有 `/file/` 读取路由，不能期望该路径自动可用。
 - 正式上线前创建公开资源域名并绑定 Bucket。Cloudflare 接入应使用 Bucket 自定义域名功能，单独建一个指向 S3 endpoint 的 DNS 记录不等同于完成公开访问。
-- 同源资源请求和后端到 R2 上传不需要浏览器 R2 CORS。若前后端上传不同源，单独处理应用 API 的 CORS，不因此启用前端直传。
+- 普通 img 跨域显示公开图片且不设置 crossorigin 时通常无需 R2 CORS；若以后通过 fetch 读取、canvas 像素读取或 crossorigin 模式使用图片，需要为实际资源域名配置适当 CORS。博客 CSP 的 img-src 应允许正式/开发资源域名，不能只允许 self。若前后端上传不同源，单独处理应用 API 的 CORS，不因此启用前端直传。[MDN crossorigin](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/crossorigin)、[MDN img-src](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/img-src)
 
 ### 11.4 缓存、成本与迁移边界
 
-- 图片字节经过 Nginx，占用站点出站带宽；Cloudflare 上游缓存不会免除这一段流量。
-- 首版保留上游缓存响应头，不强制长期缓存所有类型，不增加未经验证的 proxy_cache。后续按真实需要增加缓存；404 不长期缓存。
+- 站点服务器只承担入口请求与小体积 302 响应，图片字节直接从 R2/Cloudflare 传给浏览器，解除站点图片出站带宽瓶颈；入口仍依赖站点可用性。
+- 每次图片首次访问增加一次重定向，以及可能的目标域名 DNS/TLS 开销；能消除服务器带宽瓶颈，不保证所有网络下单张图片都更快。
+- 302 响应显式 no-store，不使用 301/308 固化目标，避免以后改域名仍命中旧映射。最终图片缓存由资源域名/对象的 Cache-Control 独立控制；302 的 no-store 不等于禁止最终图片缓存。初版不新增 Nginx proxy_cache，目标 404 不长期缓存。
 - 资源 key 不原地更新，替换图片生成新 key，为后续长缓存留条件。
-- 改上游域名且仍指向相同 key 空间时可只改 Nginx。切换 Bucket/供应商时还需要迁移对象、校验路径与响应内容，不能仅改域名。
+- 改重定向目标域名且仍指向相同 key 空间时可只改 Nginx；站点若设置了 CSP 等域名允许规则也要同步调整。切换 Bucket/供应商时还需要迁移对象、校验路径与响应内容，不能仅改域名。
 - 未来多客户端、邮件或站外展示，需要在展示边界补齐站点 Origin；这不改变当前正文保存站点根路径的选择。
 
 ## 12. 验收标准
@@ -314,17 +305,17 @@ location ^~ /file/ {
 
 1. 用独立测试 Bucket 和测试 key 验证真实 R2 Put、Head/Get 内容一致、补偿 Delete，不动现有业务对象。
 2. 通过上传接口上传图片，核查一条真实 blog_file 记录和 R2 对象；重启后记录与对象仍存在。
-3. 对实际配置运行 `nginx -t`，重载后访问返回的 `/file/...`，确认 HTTP 200、图片内容与原文件一致、Host/SNI 正确，浏览器没有临时签名跳转。
-4. 深层文章路径下访问根路径图片仍正确；缺失对象返回缺失结果，不能出现 SPA HTML 冒充图片。
+3. 对实际配置运行 `nginx -t`。用 `curl -I` 检查入口为 302、Location 是固定资源域名加完整 key、Cache-Control 为 no-store；再用 `curl -L` 下载，确认最终 200 和内容一致。浏览器网络记录应显示站点 302 后直接请求资源域名，站点没有传输图片字节。
+4. 深层文章路径下访问根路径图片仍正确；缺失对象是入口 302 后目标 404，不能出现 SPA HTML 冒充图片；非 GET/HEAD 入口请求返回 405。
 5. 通过错误凭据、错误 endpoint、数据库失败、超限场景验证错误与补偿边界。
-6. 验证文件响应安全头，HTML/SVG 直接打开不执行博客同源脚本；管理 API Authorization 正常转发，公开上游不接收站点 Cookie/Authorization。
-7. 在测试环境切换上游为持有同 key 对象的另一个地址，正文和上传返回 url 不变；记录开发上游与生产上游差异。
+6. 检查浏览器最终响应的 Origin、MIME 和所需文件头；管理 API Authorization 正常转发。验证博客 CSP 允许资源目标，普通图片可显示；若实际启用 fetch/canvas/crossorigin，额外验证对应 CORS，不能只检查 302 响应头。
+7. 在测试环境把目标切换为持有同 key 对象的另一个域名，下一次入口请求返回新 Location，正文和上传返回 url 不变；记录开发/生产目标差异，并确认开发代理不在服务端跟随 302 下载图片。
 
-仅 Mock 测试不能证明 R2 协议、权限或 Nginx 联通。生产域名未绑定时，可完成 Java 接入验证，稳定路径的生产读取验收仍有明确部署依赖。
+仅 Mock 测试不能证明 R2 协议、权限、Nginx 重定向或浏览器到资源域名的联通。生产域名未绑定时，可完成 Java 接入验证，稳定路径的生产读取验收仍有明确部署依赖。
 
 ## 13. 助手补全的默认决定与实现者余量
 
-用户明确确认了第 1 节的范围与 `/file/` 代理方向。以下为使方案可实施而提出的默认决定，不表示用户逐项指定：
+用户明确确认了第 1 节的范围，并在后续明确将 `/file/` 访问调整为 Nginx 302。以下为使方案可实施而提出的默认决定，不表示用户逐项指定：
 
 - 接口命名 `/admin/files/upload`，只接收一个名为 file 的 part。
 - 沿用 5MB/10MB 和现有业务响应码风格。
@@ -332,10 +323,10 @@ location ^~ /file/ {
 - 未知 MIME 使用 octet-stream；类型策略首版放行。
 - 使用 TransactionTemplate 短事务，结果不明时优先保留对象并核查。
 - 使用条件上传避免覆盖、保留人工清理边界，不建立自动清理服务。
-- Nginx 固定公开上游，保留路径，处理同源任意文件类型响应。
+- Nginx 固定公开目标、保留路径并返回 302，重定向 no-store；最终资源响应与缓存归资源域名管理。
 
-具体 Java 类名、小包布局、SDK 的精确锁定版本、MIME 探测工具、HTTP client 实现以及部署系统 CA/DNS 配置留给实现者。不得借此扩大到文章模块、增加上传类型允许列表、增加读取接口或将域名写进返回路径。
+具体 Java 类名、小包布局、SDK 的精确锁定版本、MIME 探测工具、HTTP client 实现以及开发入口和资源域名的实际部署配置留给实现者。不得借此扩大到文章模块、增加上传类型允许列表、增加读取接口或将域名写进返回路径。
 
 ## 14. 文档状态与后续
 
-本文件已做独立 builder check，审阅结论为 `nothing important left`。用户批准详细设计后才进入实施计划；本次交付不包含业务实现、依赖安装或真实云联调。
+原详细设计已做独立 builder check。本次按用户明确要求将资源访问改为 Nginx 302，并同步修订方案比较、配置、缓存、跨域与验收描述；修订后再次独立审阅，结论为 `nothing important left`。用户批准详细设计后才进入实施计划；本次交付不包含业务实现、依赖安装或真实云联调。
