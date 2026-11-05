@@ -12,4 +12,9 @@ public class AppException extends RuntimeException {
         super(resultStatus.getMsg());
         this.resultStatus = resultStatus;
     }
+
+    public AppException(ResultStatus resultStatus, Throwable cause) {
+        super(resultStatus.getMsg(), cause);
+        this.resultStatus = resultStatus;
+    }
 }

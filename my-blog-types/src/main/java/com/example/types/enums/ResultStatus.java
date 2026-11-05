@@ -22,6 +22,11 @@ public enum ResultStatus {
 
     TAG_NOT_FOUND(4001, "标签不存在"),
     TAG_NAME_EXISTS(4002, "标签名称已存在"),
+
+    FILE_UPLOAD_FAILED(5001, "文件上传失败"),
+    FILE_STORAGE_KEY_CONFLICT(5002, "文件存储键已存在"),
+    FILE_UPLOAD_RESULT_UNKNOWN(5003, "文件上传结果不确定"),
+    FILE_DELETE_FAILED(5004, "文件删除失败"),
     ;
 
     private final int code;
