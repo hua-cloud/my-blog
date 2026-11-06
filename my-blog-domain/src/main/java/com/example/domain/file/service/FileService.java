@@ -1,9 +1,9 @@
 package com.example.domain.file.service;
 
-import com.example.domain.file.adapter.port.FileTypePolicy;
+import cn.hutool.core.util.RandomUtil;
 import com.example.domain.file.adapter.port.IFileStoragePort;
 import com.example.domain.file.adapter.repository.IBlogFileRepository;
-import com.example.domain.file.model.dto.FileUploadResult;
+import com.example.domain.file.model.dto.FileUploadResponseDTO;
 import com.example.domain.file.model.entity.BlogFileEntity;
 import com.example.domain.file.model.entity.FileUploadSource;
 import com.example.domain.file.model.valobj.StorageLocation;
@@ -16,18 +16,12 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.URLConnection;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 
-import static com.example.types.constant.FileUploadConstants.DEFAULT_MIME_TYPE;
 import static com.example.types.constant.FileUploadConstants.KEY_DATE;
-import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH;
 import static com.example.types.constant.FileUploadConstants.MAX_KEY_RETRIES;
 import static com.example.types.constant.FileUploadConstants.SAFE_EXTENSION;
 import static com.example.types.enums.ResultStatus.FILE_STORAGE_KEY_CONFLICT;
@@ -40,16 +34,14 @@ public class FileService {
 
     private final IFileStoragePort storage;
     private final IBlogFileRepository repository;
-    private final FileTypePolicy typePolicy;
     private final TransactionTemplate writeTransaction;
     private final TransactionTemplate verificationTransaction;
     private final Clock clock;
 
-    public FileService(IFileStoragePort storage, IBlogFileRepository repository, FileTypePolicy typePolicy,
+    public FileService(IFileStoragePort storage, IBlogFileRepository repository,
                        PlatformTransactionManager transactionManager, Clock clock) {
         this.storage = storage;
         this.repository = repository;
-        this.typePolicy = typePolicy;
         this.clock = clock;
         this.writeTransaction = new TransactionTemplate(transactionManager);
         writeTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -61,27 +53,21 @@ public class FileService {
     }
 
     /**
-     * 校验文件并上传到对象存储，确认元数据提交后返回结果。
+     * 将已校验的文件上传到对象存储，确认元数据提交后返回结果。
      *
-     * @param originalName 上传时的原始文件名
+     * @param filename 清理并校验后的文件名
      * @param fileSize 文件实际字节数
+     * @param mimeType 根据内容探测得到的 MIME 类型或默认类型
      * @param streamSource 每次打开均可从头读取的文件源
      * @return 已上传文件的元数据和站点访问路径
-     * @throws IllegalArgumentException 文件输入不合法
      * @throws IllegalStateException 调用方已开启数据库事务
      * @throws AppException 对象存储或元数据写入失败
      */
-    public FileUploadResult upload(String originalName, long fileSize, FileUploadSource.StreamSource streamSource) {
+    public FileUploadResponseDTO upload(String filename, long fileSize, String mimeType,
+                                        FileUploadSource.StreamSource streamSource) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("文件上传必须在数据库事务外调用");
         }
-        if (fileSize <= 0 || streamSource == null) {
-            throw new IllegalArgumentException("上传文件不能为空");
-        }
-        String filename = cleanFilename(originalName);
-        String mimeType = detectMimeType(streamSource);
-        typePolicy.validate(filename, mimeType);
-
         StorageLocation location = store(filename, fileSize, mimeType, streamSource);
         BlogFileEntity metadata = BlogFileEntity.builder()
                 .originalName(filename)
@@ -92,16 +78,21 @@ public class FileService {
                 .fileSize(fileSize)
                 .build();
         Long fileId = saveMetadata(metadata, location);
-        return new FileUploadResult(fileId, location.storageKey(), "/" + location.storageKey(),
-                filename, mimeType, fileSize);
+        return FileUploadResponseDTO.builder()
+                .fileId(fileId)
+                .objectKey(location.storageKey())
+                .url("/" + location.storageKey())
+                .originalName(filename)
+                .mimeType(mimeType)
+                .fileSize(fileSize)
+                .build();
     }
 
-    private StorageLocation store(String filename, long fileSize, String mimeType,
-                                  FileUploadSource.StreamSource streamSource) {
-        String prefix = "file/" + LocalDate.now(clock).format(KEY_DATE) + "/";
+    private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
+        String prefix = "images/" + LocalDate.now(clock).format(KEY_DATE) + "/";
         String suffix = safeSuffix(filename);
         for (int retries = 0; ; retries++) {
-            String key = prefix + UUID.randomUUID().toString().replace("-", "") + suffix;
+            String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR, 6) + suffix;
             try {
                 return storage.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
             } catch (AppException failure) {
@@ -154,21 +145,6 @@ public class FileService {
         }
     }
 
-    private static String cleanFilename(String originalName) {
-        if (originalName == null) {
-            throw new IllegalArgumentException("文件名不能为空");
-        }
-        int lastSeparator = Math.max(originalName.lastIndexOf('/'), originalName.lastIndexOf('\\'));
-        String filename = originalName.substring(lastSeparator + 1).replaceAll("\\p{Cntrl}", "").strip();
-        if (filename.isEmpty() || ".".equals(filename) || "..".equals(filename)) {
-            throw new IllegalArgumentException("文件名不合法");
-        }
-        if (filename.codePointCount(0, filename.length()) > MAX_FILENAME_LENGTH) {
-            throw new IllegalArgumentException("文件名不能超过 255 个字符");
-        }
-        return filename;
-    }
-
     private static String safeSuffix(String filename) {
         int dot = filename.lastIndexOf('.');
         if (dot <= 0) {
@@ -176,15 +152,6 @@ public class FileService {
         }
         String suffix = filename.substring(dot + 1);
         return SAFE_EXTENSION.matcher(suffix).matches() ? "." + suffix.toLowerCase(Locale.ROOT) : "";
-    }
-
-    private static String detectMimeType(FileUploadSource.StreamSource streamSource) {
-        try (var stream = new BufferedInputStream(streamSource.openStream())) {
-            String mimeType = URLConnection.guessContentTypeFromStream(stream);
-            return mimeType == null ? DEFAULT_MIME_TYPE : mimeType;
-        } catch (IOException | RuntimeException ignored) {
-            return DEFAULT_MIME_TYPE;
-        }
     }
 
     private static class WriteOutcome implements TransactionSynchronization {

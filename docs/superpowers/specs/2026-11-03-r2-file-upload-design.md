@@ -3,7 +3,7 @@
 - 日期：2026-11-03
 - 状态：2026-11-03 按用户要求将资源访问修订为 Nginx 302；修订已通过独立 builder check，待用户审阅，尚未实施。
 - 范围：现有 Java 项目接入 Cloudflare R2，只新增一个文件上传接口；交付配套 Nginx 部署配置说明。
-- 本文优先于早期 R2 调研报告以及既有领域设计中 `/files/{id}` 读取入口的建议。此次选择 `/file/<对象键后缀>` 由 Nginx 直接返回 302，浏览器从公开资源域名获取文件，不增加 Java 文件读取接口。
+- 本文优先于早期 R2 调研报告以及既有领域设计中 `/files/{id}` 读取入口的建议。此次选择 `/images/<对象键后缀>` 由 Nginx 直接返回 302，浏览器从公开资源域名获取文件，不增加 Java 文件读取接口。
 
 ## 1. 目的与已确认需求
 
@@ -14,12 +14,12 @@
 1. 上传仅需选择文件，无需手动填写当前表中的其他字段。
 2. 一次接口调用完成 R2 上传和数据库记录写入，二者都成功后才返回成功。
 3. 首版预留文件类型限制的扩展位置，但不因扩展名或 MIME 类型拒绝文件。
-4. 对外返回 `/file/...` 形式的站点根路径；文章以后可以保存该路径，避免重复存储上游域名。
+4. 对外返回 `/images/...` 形式的站点根路径；文章以后可以保存该路径，避免重复存储上游域名。
 5. Nginx 对该路径直接返回 HTTP 302，Location 指向 R2 公开资源域名；浏览器自动请求目标地址，图片字节由 R2/Cloudflare 发送，不经过站点服务器，无 Java 查库或签名生成。
 6. 将来替换资源域名时调整 Nginx 重定向目标；存储迁移时仍需复制对象并保持 key 不变。
 7. 草稿图片权限、文章模块和正文处理本轮不考虑。
 
-用户当前没有绑定 R2 公开资源域名。真实上传只需要 S3 endpoint 和凭据；通过 `/file/` 预览还需要可公开读取的目标域名及前端入口重定向，这两项应独立验收。
+用户当前没有绑定 R2 公开资源域名。真实上传只需要 S3 endpoint 和凭据；通过 `/images/` 预览还需要可公开读取的目标域名及前端入口重定向，这两项应独立验收。
 
 ## 2. 范围与约束
 
@@ -67,8 +67,8 @@
 | --- | --- | --- |
 | 正文保存资源域名完整 URL | 浏览器直接使用 CDN；上游域名进入内容 | 用户不选用 |
 | `/files/{id}` 查库后签名并 302 | 可按 ID 解析位置；每次访问引入应用与临时授权 | 用户不选用，本轮无访问授权需求 |
-| `/file/...` 由 Nginx 反向代理公开 R2 域名 | 内容只保存路径；图片流量经过站点服务器，受其出站带宽限制 | 用户原选方案，现已被 302 方案替代 |
-| `/file/...` 由 Nginx 返回 302 到公开 R2 域名 | 内容保留稳定路径；站点只返回小响应，浏览器直接从 Cloudflare 获取图片；首次读取多一次重定向 | 用户本次明确选用 |
+| `/images/...` 由 Nginx 反向代理公开 R2 域名 | 内容只保存路径；图片流量经过站点服务器，受其出站带宽限制 | 用户原选方案，现已被 302 方案替代 |
+| `/images/...` 由 Nginx 返回 302 到公开 R2 域名 | 内容保留稳定路径；站点只返回小响应，浏览器直接从 Cloudflare 获取图片；首次读取多一次重定向 | 用户本次明确选用 |
 
 S3 写入端点与公开读取域名分开：Java 上传访问 R2 S3 endpoint，Nginx 只生成公开自定义域名下的 Location，浏览器请求该目标。把私有 S3 endpoint 放入 Location 不能获得无签名公开读取能力；目标必须已经公开可读。[R2 公开 Bucket 文档](https://developers.cloudflare.com/r2/buckets/public-buckets/)
 
@@ -78,19 +78,19 @@ S3 写入端点与公开读取域名分开：Java 上传访问 R2 S3 endpoint，
 
 | 项目 | 示例 | 规则 |
 | --- | --- | --- |
-| R2 object key | `file/2026/11/03/18a4d21c315249218fe455f3d978d213.png` | 无前导 `/`，包含 `file/` 前缀 |
+| R2 object key | `images/2026/11/03/kqmvza.png` | 无前导 `/`，包含 `images/` 前缀 |
 | `blog_file.storage_key` | 同上 | 保存完整桶内 key，不包含桶名或域名 |
 | 返回 `objectKey` | 同上 | 与数据库字段含义一致 |
-| 返回 `url` | `/file/2026/11/03/18a4d21c315249218fe455f3d978d213.png` | `"/" + objectKey`，不再重复拼 `/file/` |
-| Nginx 302 Location | `https://assets.example.com/file/2026/11/03/18a4d21c315249218fe455f3d978d213.png` | 固定公开域名加原请求路径，不剥离前缀；由浏览器请求 |
+| 返回 `url` | `/images/2026/11/03/kqmvza.png` | `"/" + objectKey`，不再重复拼 `/images/` |
+| Nginx 302 Location | `https://assets.example.com/images/2026/11/03/kqmvza.png` | 固定公开域名加原请求路径，不剥离前缀；由浏览器请求 |
 
-`url` 是从站点根开始的路径，不是相对当前文章目录的路径，也不是按数据库 ID 查找的地址。任意前端页面渲染它时，其所在站点都需要实现相同的 `/file/` 302 契约。前端将该路径赋给 img 的 src 或插入 Markdown，浏览器自动跟随重定向，无需前端手动跳转页面。
+`url` 是从站点根开始的路径，不是相对当前文章目录的路径，也不是按数据库 ID 查找的地址。任意前端页面渲染它时，其所在站点都需要实现相同的 `/images/` 302 契约。前端将该路径赋给 img 的 src 或插入 Markdown，浏览器自动跟随重定向，无需前端手动跳转页面。
 
-对象 key 由服务端生成：`file/yyyy/MM/dd/<无连字符UUID>[.<安全扩展名>]`。日期取服务端配置时区，采用注入 Clock 便于测试；生产与开发按 Asia/Shanghai 对齐。扩展名只取最后一个后缀，限定为不超过 16 位 ASCII 字母/数字并转小写，不合规则省略。**这只是生成安全名称，不是文件类型允许列表，不影响文件上传是否接受。**
+对象 key 由服务端生成：`images/yyyy/MM/dd/<6位随机小写英文字母>[.<安全扩展名>]`。日期取服务端配置时区，采用注入 Clock 便于测试；生产与开发按 Asia/Shanghai 对齐。扩展名只取最后一个后缀，限定为不超过 16 位 ASCII 字母/数字并转小写，不合规则省略。**这只是生成安全名称，不是文件类型允许列表，不影响文件上传是否接受。**
 
 原始名称与对象 key 分离。去除客户端路径，只保留文件名，去除控制字符，清理后为空或超过 255 字符返回参数错误，不静默截断。文件字节不因改名而变化。
 
-生成 key 后检查长度与前缀。唯一性采用随机 UUID；对象写入使用 `If-None-Match: *` 防止覆盖已有对象。条件冲突视为 key 冲突，生成新 key 后最多重试 2 次。补偿只删除本次确认创建的 key，不能删除碰撞到的既有对象。[R2 条件写兼容说明](https://developers.cloudflare.com/r2/api/s3/api/)
+生成 key 后检查长度与前缀。文件名主体采用 6 位随机小写英文字母；对象写入使用 `If-None-Match: *` 防止覆盖已有对象。条件冲突视为 key 冲突，生成新 key 后最多重试 2 次。补偿只删除本次确认创建的 key，不能删除碰撞到的既有对象。[R2 条件写兼容说明](https://developers.cloudflare.com/r2/api/s3/api/)
 
 ## 5. 上传接口契约
 
@@ -99,7 +99,7 @@ S3 写入端点与公开读取域名分开：Java 上传访问 R2 S3 endpoint，
 - 方法：`POST /admin/files/upload`
 - Content-Type：`multipart/form-data`
 - 认证：沿用 `Authorization: Bearer <token>`。
-- 参数：名为 `file` 的单个文件 part，不接受批量列表。若重复提交多个 `file` part，应明确拒绝，不静默取第一个。
+- 参数：名为 `file` 的单个文件 part。若请求包含多个同名 `file`，Spring MVC 绑定第一个，服务仅处理绑定的文件。
 - 无业务表单字段；客户端不传 storageType、bucket、key、大小、审计人或时间来决定落库值。
 - 不额外提供“保存文件记录”的接口。
 
@@ -113,8 +113,8 @@ S3 写入端点与公开读取域名分开：Java 上传访问 R2 S3 endpoint，
   "msg": "操作成功",
   "data": {
     "fileId": 123,
-    "objectKey": "file/2026/11/03/18a4d21c315249218fe455f3d978d213.png",
-    "url": "/file/2026/11/03/18a4d21c315249218fe455f3d978d213.png",
+    "objectKey": "images/2026/11/03/kqmvza.png",
+    "url": "/images/2026/11/03/kqmvza.png",
     "originalName": "示意图.png",
     "mimeType": "image/png",
     "fileSize": 102400
@@ -131,7 +131,7 @@ S3 写入端点与公开读取域名分开：Java 上传访问 R2 S3 endpoint，
 | 场景 | 对外行为 | 是否产生对象/记录 |
 | --- | --- | --- |
 | 未登录、Token 失效 | 现有 UNAUTHORIZED（业务码 401） | 无 |
-| 缺少 part、重复文件、空文件、文件名不合规 | BAD_REQUEST（业务码 400）及清楚提示 | 无 |
+| 缺少 part、空文件、文件名不合规或请求内容类型不受支持 | BAD_REQUEST（业务码 400）及清楚提示 | 无 |
 | 超过 5MB 或 multipart 请求超过 10MB | BAD_REQUEST 及大小提示 | 不进入存储流程 |
 | 任意扩展名、任意 MIME、不识别内容 | 首版允许，未知 MIME 兜底 | 正常上传 |
 | R2 失败、超时或连接异常 | 新增 FILE_UPLOAD_FAILED（建议业务码 5001） | 不写元数据，远端不明结果需记录 |
@@ -177,7 +177,7 @@ Maven：根 POM 引入 AWS SDK BOM 固定明确 2.x 版本，基础设施引入 
 
 ## 8. 上传顺序与事务边界
 
-1. Controller 校验只有一个 file part，将请求中的 MultipartFile 转换成请求期可重开的上传源。
+1. Spring MVC 绑定名为 `file` 的文件 part。Controller 校验文件非空，并将 `MultipartFile` 转换成请求期可重开的上传源。
 2. 用例校验非空、5MB、名称和长度，取得大小、探测 MIME，执行放行型类型策略。
 3. 生成 key；构造 `storageType=R2`、配置桶名、key 的定位信息。
 4. 在数据库事务外执行 R2 上传，明确成功创建对象后继续。
@@ -249,21 +249,21 @@ file:
 以下片段放入站点已有 server 配置。`assets.example.com` 替换为实际 R2 公开资源域名。本次不直接修改服务器配置。
 
 ```nginx
-location ^~ /file/ {
+location ^~ /images/ {
     # return 在 rewrite 阶段执行，方法检查也在该阶段先完成。
     if ($request_method !~ ^(GET|HEAD)$) { return 405; }
 
     # 不缓存目标映射，调整资源域名后下一次访问使用新配置。
     add_header Cache-Control "no-store" always;
 
-    # 保留完整 /file/... 和原查询串；域名固定，不取自请求参数。
+    # 保留完整 /images/... 和原查询串；域名固定，不取自请求参数。
     return 302 https://assets.example.com$request_uri;
 }
 ```
 
-`$request_uri` 保留原请求路径及编码和查询串。key 由后端生成安全 ASCII 路径，不剥离 `/file/`，不拼接客户端传入的目标域名或 URL 参数。return 302 直接生成响应，Nginx 不建立到 R2 的连接，因此这里没有 proxy_pass、上游 Host/SNI、CA 或 DNS resolver 配置；目标域名的解析和 HTTPS 校验由浏览器完成。[Nginx return 官方说明](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)
+`$request_uri` 保留原请求路径及编码和查询串。key 由后端生成安全 ASCII 路径，不剥离 `/images/`，不拼接客户端传入的目标域名或 URL 参数。return 302 直接生成响应，Nginx 不建立到 R2 的连接，因此这里没有 proxy_pass、上游 Host/SNI、CA 或 DNS resolver 配置；目标域名的解析和 HTTPS 校验由浏览器完成。[Nginx return 官方说明](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)
 
-`^~ /file/` 不能落入 SPA 的 index.html，重定向目标不能再返回当前入口形成循环。Nginx 不检查对象是否存在：即使 key 不存在，也先返回 302，由目标域名最终返回 404。该入口不携带 R2 上传凭据；目标域名会出现在浏览器网络请求和 Location 中，这个设计便于更换内容引用的域名，不用于隐藏真实资源地址或控制访问权限。
+`^~ /images/` 不能落入 SPA 的 index.html，重定向目标不能再返回当前入口形成循环。Nginx 不检查对象是否存在：即使 key 不存在，也先返回 302，由目标域名最终返回 404。该入口不携带 R2 上传凭据；目标域名会出现在浏览器网络请求和 Location 中，这个设计便于更换内容引用的域名，不用于隐藏真实资源地址或控制访问权限。
 
 文件最终以资源域名的 Origin 返回。博客 Nginx 给 302 响应设置的 Content-Type、CSP 或 nosniff 不会自动变成最终文件响应头；需要的文件头在 R2 对象元数据或资源域名的响应规则中配置。首版任意类型仍可上传，未知 MIME 保持 octet-stream。资源域名不部署博客认证逻辑，博客登录 Cookie 尽量采用 host-only，避免宽泛 Domain Cookie 覆盖资源子域名；浏览器对目标域名适用的 Cookie 按其自身规则发送，不能再通过清空代理请求头来控制。已有 server 安全头的继承仍需在部署时核查，不因 location 的 add_header 无意丢失必要头。
 
@@ -274,7 +274,7 @@ location ^~ /file/ {
 ### 11.3 开发与上线依赖
 
 - 开发可用显式开启的 R2 `r2.dev` 公开开发地址作为 302 目标，替换 return 中的域名；它仅用于测试，不作为生产承诺。
-- 前端开发服务器在其浏览器 Origin 下对 `/file/` 返回同等 302，或只将入口请求转给本地 Nginx 并把 302 原样传回浏览器，不能在开发代理内自动跟随并下载文件。仅直接调用 Java 8080 时没有 `/file/` 读取路由，不能期望该路径自动可用。
+- 前端开发服务器在其浏览器 Origin 下对 `/images/` 返回同等 302，或只将入口请求转给本地 Nginx 并把 302 原样传回浏览器，不能在开发代理内自动跟随并下载文件。仅直接调用 Java 8080 时没有 `/images/` 读取路由，不能期望该路径自动可用。
 - 正式上线前创建公开资源域名并绑定 Bucket。Cloudflare 接入应使用 Bucket 自定义域名功能，单独建一个指向 S3 endpoint 的 DNS 记录不等同于完成公开访问。
 - 普通 img 跨域显示公开图片且不设置 crossorigin 时通常无需 R2 CORS；若以后通过 fetch 读取、canvas 像素读取或 crossorigin 模式使用图片，需要为实际资源域名配置适当 CORS。博客 CSP 的 img-src 应允许正式/开发资源域名，不能只允许 self。若前后端上传不同源，单独处理应用 API 的 CORS，不因此启用前端直传。[MDN crossorigin](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/crossorigin)、[MDN img-src](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/img-src)
 
@@ -293,7 +293,7 @@ location ^~ /file/ {
 
 1. 登录后的单文件上传调用存储并生成一条正确元数据，返回真实主键与精确的 `/` + key 路径。
 2. storage_type 显式 R2，Bucket 正确，审计人与时间由服务端填写；不信任客户端伪造值。
-3. 缺 file、重复 file、零字节、超限与名称不合规被拒绝，存储和数据库无写入。
+3. 缺 file、零字节、超限与名称不合规被拒绝，存储和数据库无写入。多个同名 `file` 只处理第一个。
 4. PNG、未知后缀、无扩展名及未知内容均可上传；不识别 MIME 兜底，类型锚点实际被调用，首版策略无类型拒绝。
 5. key 安全、短于 128、无路径穿越，扩展名清理不改变文件内容；类型探测后上传内容未丢头。
 6. R2 明确失败不写库；条件冲突不覆盖旧对象；碰撞重试只消费本次可重开的输入源。
@@ -315,11 +315,11 @@ location ^~ /file/ {
 
 ## 13. 助手补全的默认决定与实现者余量
 
-用户明确确认了第 1 节的范围，并在后续明确将 `/file/` 访问调整为 Nginx 302。以下为使方案可实施而提出的默认决定，不表示用户逐项指定：
+用户明确确认了第 1 节的范围，并在后续明确将 `/images/` 访问调整为 Nginx 302。以下为使方案可实施而提出的默认决定，不表示用户逐项指定：
 
 - 接口命名 `/admin/files/upload`，只接收一个名为 file 的 part。
 - 沿用 5MB/10MB 和现有业务响应码风格。
-- key 自身包含 `file/`，url 为前导斜杠加 key，使用日期和 UUID。
+- key 自身包含 `images/`，url 为前导斜杠加 key，使用日期和 6 位随机小写英文字母。
 - 未知 MIME 使用 octet-stream；类型策略首版放行。
 - 使用 TransactionTemplate 短事务，结果不明时优先保留对象并核查。
 - 使用条件上传避免覆盖、保留人工清理边界，不建立自动清理服务。

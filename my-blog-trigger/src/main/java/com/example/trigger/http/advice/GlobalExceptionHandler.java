@@ -8,12 +8,14 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.stream.Collectors;
 
@@ -55,6 +57,27 @@ public class GlobalExceptionHandler {
     public R<Void> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("请求参数不合法: {}", e.getMessage());
         return R.error(ResultStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    /**
+     * 返回缺少必填请求部分的提示。
+     *
+     * @param e 请求部分缺失异常
+     * @return 参数错误响应
+     */
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public R<Void> handleMissingRequestPart(MissingServletRequestPartException e) {
+        return R.error(ResultStatus.BAD_REQUEST, "缺少请求部分 " + e.getRequestPartName());
+    }
+
+    /**
+     * 返回请求内容类型不受支持的提示。
+     *
+     * @return 参数错误响应
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public R<Void> handleUnsupportedMediaType() {
+        return R.error(ResultStatus.BAD_REQUEST, "不支持的请求内容类型");
     }
 
     /**
