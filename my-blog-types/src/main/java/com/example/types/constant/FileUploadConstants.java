@@ -1,0 +1,18 @@
+package com.example.types.constant;
+
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+public class FileUploadConstants {
+
+    public static final int MAX_FILENAME_LENGTH = 255;
+
+    public static final int MAX_KEY_RETRIES = 2;
+
+    public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+
+    public static final Pattern SAFE_EXTENSION = Pattern.compile("[a-zA-Z0-9]{1,16}");
+
+    public static final DateTimeFormatter KEY_DATE = DateTimeFormatter.ofPattern("uuuu/MM/dd", Locale.ROOT);
+}

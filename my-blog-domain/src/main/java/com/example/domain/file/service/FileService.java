@@ -21,12 +21,15 @@ import java.io.IOException;
 import java.net.URLConnection;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
+import static com.example.types.constant.FileUploadConstants.DEFAULT_MIME_TYPE;
+import static com.example.types.constant.FileUploadConstants.KEY_DATE;
+import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH;
+import static com.example.types.constant.FileUploadConstants.MAX_KEY_RETRIES;
+import static com.example.types.constant.FileUploadConstants.SAFE_EXTENSION;
 import static com.example.types.enums.ResultStatus.FILE_STORAGE_KEY_CONFLICT;
 import static com.example.types.enums.ResultStatus.FILE_UPLOAD_FAILED;
 import static com.example.types.enums.ResultStatus.FILE_UPLOAD_RESULT_UNKNOWN;
@@ -34,13 +37,6 @@ import static com.example.types.enums.ResultStatus.FILE_UPLOAD_RESULT_UNKNOWN;
 @Slf4j
 @Service
 public class FileService {
-
-    private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
-    private static final int MAX_FILENAME_LENGTH = 255;
-    private static final int MAX_KEY_RETRIES = 2;
-    private static final String DEFAULT_MIME_TYPE = "application/octet-stream";
-    private static final Pattern SAFE_EXTENSION = Pattern.compile("[a-zA-Z0-9]{1,16}");
-    private static final DateTimeFormatter KEY_DATE = DateTimeFormatter.ofPattern("uuuu/MM/dd", Locale.ROOT);
 
     private final IFileStoragePort storage;
     private final IBlogFileRepository repository;
@@ -81,9 +77,6 @@ public class FileService {
         }
         if (fileSize <= 0 || streamSource == null) {
             throw new IllegalArgumentException("上传文件不能为空");
-        }
-        if (fileSize > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("单个文件大小不能超过 5 MB");
         }
         String filename = cleanFilename(originalName);
         String mimeType = detectMimeType(streamSource);
