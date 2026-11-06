@@ -1,5 +1,8 @@
 server:
   port: 8080
+  tomcat:
+    # 允许读完略超出 10MB 上限的请求体，使客户端能收到大小错误响应。
+    max-swallow-size: 11MB
 
 spring:
   config:
@@ -9,6 +12,7 @@ spring:
   servlet:
     multipart:
       enabled: true
+      resolve-lazily: true
       max-file-size: 5MB
       max-request-size: 10MB
 

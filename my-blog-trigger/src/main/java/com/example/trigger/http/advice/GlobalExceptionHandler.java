@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 import java.util.stream.Collectors;
 
@@ -53,6 +55,26 @@ public class GlobalExceptionHandler {
     public R<Void> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("请求参数不合法: {}", e.getMessage());
         return R.error(ResultStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    /**
+     * 将 Servlet multipart 解析阶段的大小超限转换为参数错误。
+     *
+     * @return 上传大小提示
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public R<Void> handleUploadSizeExceeded() {
+        return R.error(ResultStatus.BAD_REQUEST, "上传文件大小或请求总大小超过限制");
+    }
+
+    /**
+     * 将无法解析的 multipart 请求转换为参数错误。
+     *
+     * @return 请求格式提示
+     */
+    @ExceptionHandler(MultipartException.class)
+    public R<Void> handleMultipart() {
+        return R.error(ResultStatus.BAD_REQUEST, "无法解析 multipart 上传请求");
     }
 
     @ExceptionHandler(NotLoginException.class)
