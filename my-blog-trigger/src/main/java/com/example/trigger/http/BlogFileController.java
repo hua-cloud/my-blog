@@ -47,9 +47,10 @@ public class BlogFileController {
         }
         BlogFileEntity fileEntity = fileService.upload(filename, file.getSize(), mimeType, file::getInputStream);
         FileUploadResponseDTO responseDTO = FileUploadResponseDTO.builder()
-                .fileId(fileEntity.getId())
+                .id(fileEntity.getId())
                 .url(SLASH + fileEntity.getStorageKey())
                 .originalName(fileEntity.getOriginalName())
+                .fileSize(fileEntity.getFileSize())
                 .build();
         return R.success(responseDTO);
     }

@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class FileUploadResponseDTO implements Serializable {
 
-    private Long fileId;
+    private Long id;
 
     private String objectKey;
 
