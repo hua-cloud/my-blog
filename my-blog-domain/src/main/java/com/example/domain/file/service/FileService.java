@@ -1,5 +1,6 @@
 package com.example.domain.file.service;
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.example.domain.file.adapter.port.IFileStoragePort;
 import com.example.domain.file.adapter.repository.IBlogFileRepository;
@@ -14,10 +15,12 @@ import org.springframework.stereotype.Service;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Locale;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.example.types.constant.Constants.DOT;
 import static com.example.types.constant.Constants.SLASH;
 import static com.example.types.constant.FileUploadConstants.*;
+import static com.example.types.enums.ResultStatus.FILE_UPLOAD_FAILED;
 import static com.example.types.enums.ResultStatus.FILE_UPLOAD_RESULT_UNKNOWN;
 
 @Slf4j
@@ -28,6 +31,8 @@ public class FileService implements IFileService {
     private final IFileStoragePort storagePort;
 
     private final IBlogFileRepository fileRepository;
+
+    private final ThreadPoolExecutor threadPoolExecutor;
 
     private final Clock clock;
 
@@ -42,8 +47,27 @@ public class FileService implements IFileService {
                 .mimeType(mimeType)
                 .fileSize(fileSize)
                 .build();
-        entity.setId(fileRepository.save(entity));
+        entity.setId(saveMetadata(entity, location));
         return entity;
+    }
+
+    private Long saveMetadata(BlogFileEntity entity, StorageLocation location) {
+        try {
+            return fileRepository.save(entity);
+        } catch (Exception e1) {
+            BlogFileEntity existing = fileRepository.selectByStorageLocation(location.storageType(), location.bucketName(), location.storageKey());
+            if (ObjUtil.isNotNull(existing)) {
+                return existing.getId();
+            }
+            threadPoolExecutor.execute(() -> {
+                try {
+                    storagePort.delete(location);
+                } catch (RuntimeException e2) {
+                    log.warn("文件补偿删除失败，location={}", location, e2);
+                }
+            });
+            throw new AppException(FILE_UPLOAD_FAILED, e1);
+        }
     }
 
     private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {

@@ -1,6 +1,7 @@
 package com.example.domain.file.adapter.repository;
 
 import com.example.domain.file.model.entity.BlogFileEntity;
+import com.example.domain.file.model.valobj.StorageType;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
 
@@ -17,5 +18,5 @@ public interface IBlogFileRepository {
     /**
      * 按完整存储位置查询，供上传提交结果核查使用；不存在时返回 null。
      */
-    BlogFileEntity selectByStorageLocation(String storageType, String bucketName, String storageKey);
+    BlogFileEntity selectByStorageLocation(StorageType storageType, String bucketName, String storageKey);
 }

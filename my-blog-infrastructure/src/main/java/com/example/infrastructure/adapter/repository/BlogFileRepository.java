@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.domain.file.adapter.repository.IBlogFileRepository;
 import com.example.domain.file.model.entity.BlogFileEntity;
+import com.example.domain.file.model.valobj.StorageType;
 import com.example.infrastructure.persistence.mapper.IBlogFileMapper;
 import com.example.infrastructure.persistence.converter.PageConverter;
 import com.example.infrastructure.persistence.po.BlogFile;
@@ -53,9 +54,9 @@ public class BlogFileRepository implements IBlogFileRepository {
     }
 
     @Override
-    public BlogFileEntity selectByStorageLocation(String storageType, String bucketName, String storageKey) {
+    public BlogFileEntity selectByStorageLocation(StorageType storageType, String bucketName, String storageKey) {
         BlogFile file = fileMapper.selectOne(Wrappers.<BlogFile>lambdaQuery()
-                .eq(BlogFile::getStorageType, storageType)
+                .eq(BlogFile::getStorageType, storageType.name())
                 .eq(BlogFile::getBucketName, bucketName)
                 .eq(BlogFile::getStorageKey, storageKey));
         return MapstructUtils.convert(file, BlogFileEntity.class);
