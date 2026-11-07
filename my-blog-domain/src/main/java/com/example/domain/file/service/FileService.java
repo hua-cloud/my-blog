@@ -49,7 +49,7 @@ public class FileService implements IFileService {
     private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
         String prefix = IMAGES_DIRECTORY + LocalDate.now(clock).format(KEY_DATE) + SLASH;
         String suffix = safeSuffix(filename);
-        String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR, 6) + suffix;
+        String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR_NUMBER, 6) + suffix;
         try {
             return storagePort.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
         } catch (AppException e) {

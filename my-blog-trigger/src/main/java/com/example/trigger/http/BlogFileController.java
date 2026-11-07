@@ -23,7 +23,7 @@ import static com.example.types.constant.FileUploadConstants.ALLOWED_MIME_TYPES;
 import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH;
 
 @RestController
-@RequestMapping("/admin/files")
+@RequestMapping("/admin/file")
 @RequiredArgsConstructor
 public class BlogFileController {
 
