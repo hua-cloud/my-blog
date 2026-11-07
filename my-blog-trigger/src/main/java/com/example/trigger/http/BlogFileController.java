@@ -17,6 +17,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URLConnection;
 
+import static com.example.types.constant.Constants.BACK_SLASH;
+import static com.example.types.constant.Constants.SLASH;
 import static com.example.types.constant.FileUploadConstants.ALLOWED_MIME_TYPES;
 import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH;
 
@@ -44,23 +46,19 @@ public class BlogFileController {
             throw new IllegalArgumentException("仅支持上传 PNG、JPEG 和 GIF 图片");
         }
         BlogFileEntity fileEntity = fileService.upload(filename, file.getSize(), mimeType, file::getInputStream);
-        String objectKey = fileEntity.getStorageKey();
-        FileUploadResponseDTO response = FileUploadResponseDTO.builder()
+        FileUploadResponseDTO responseDTO = FileUploadResponseDTO.builder()
                 .fileId(fileEntity.getId())
-                .objectKey(objectKey)
-                .url("/" + objectKey)
+                .url(SLASH + fileEntity.getStorageKey())
                 .originalName(fileEntity.getOriginalName())
-                .mimeType(fileEntity.getMimeType())
-                .fileSize(fileEntity.getFileSize())
                 .build();
-        return R.success(response);
+        return R.success(responseDTO);
     }
 
     private String cleanFilename(String originalName) {
         if (StrUtil.isBlank(originalName)) {
             throw new IllegalArgumentException("文件名不能为空");
         }
-        int lastSeparator = Math.max(originalName.lastIndexOf('/'), originalName.lastIndexOf('\\'));
+        int lastSeparator = Math.max(originalName.lastIndexOf(SLASH), originalName.lastIndexOf(BACK_SLASH));
         String filename = originalName.substring(lastSeparator + 1).replaceAll("\\p{Cntrl}", "").strip();
         if (StrUtil.isBlank(filename)) {
             throw new IllegalArgumentException("文件名不合法");

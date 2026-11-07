@@ -15,11 +15,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Locale;
 
-import static com.example.types.constant.FileUploadConstants.KEY_DATE;
-import static com.example.types.constant.FileUploadConstants.MAX_KEY_RETRIES;
-import static com.example.types.constant.FileUploadConstants.SAFE_EXTENSION;
-import static com.example.types.enums.ResultStatus.FILE_STORAGE_KEY_CONFLICT;
-import static com.example.types.enums.ResultStatus.FILE_UPLOAD_FAILED;
+import static com.example.types.constant.Constants.DOT;
+import static com.example.types.constant.Constants.SLASH;
+import static com.example.types.constant.FileUploadConstants.*;
 import static com.example.types.enums.ResultStatus.FILE_UPLOAD_RESULT_UNKNOWN;
 
 @Slf4j
@@ -36,7 +34,7 @@ public class FileService implements IFileService {
     @Override
     public BlogFileEntity upload(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
         StorageLocation location = store(filename, fileSize, mimeType, streamSource);
-        BlogFileEntity metadata = BlogFileEntity.builder()
+        BlogFileEntity entity = BlogFileEntity.builder()
                 .originalName(filename)
                 .storageType(location.storageType().name())
                 .bucketName(location.bucketName())
@@ -44,43 +42,30 @@ public class FileService implements IFileService {
                 .mimeType(mimeType)
                 .fileSize(fileSize)
                 .build();
-        metadata.setId(saveMetadata(metadata));
-        return metadata;
+        entity.setId(fileRepository.save(entity));
+        return entity;
     }
 
     private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
-        String prefix = "images/" + LocalDate.now(clock).format(KEY_DATE) + "/";
+        String prefix = IMAGES_DIRECTORY + LocalDate.now(clock).format(KEY_DATE) + SLASH;
         String suffix = safeSuffix(filename);
-        for (int retries = 0; ; retries++) {
-            String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR, 6) + suffix;
-            try {
-                return storagePort.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
-            } catch (AppException failure) {
-                if (failure.getResultStatus() == FILE_UPLOAD_RESULT_UNKNOWN) {
-                    log.warn("对象上传结果待核查，key={}", key);
-                }
-                if (failure.getResultStatus() != FILE_STORAGE_KEY_CONFLICT || retries >= MAX_KEY_RETRIES) {
-                    throw failure;
-                }
-            }
-        }
-    }
-
-    private Long saveMetadata(BlogFileEntity metadata) {
+        String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR, 6) + suffix;
         try {
-            return fileRepository.save(metadata);
-        } catch (RuntimeException cause) {
-            log.warn("文件元数据写入失败，bucket={}, key={}", metadata.getBucketName(), metadata.getStorageKey());
-            throw new AppException(FILE_UPLOAD_FAILED, cause);
+            return storagePort.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
+        } catch (AppException e) {
+            if (e.getResultStatus() == FILE_UPLOAD_RESULT_UNKNOWN) {
+                log.warn("对象上传结果待核查，key={}", key);
+            }
+            throw e;
         }
     }
 
-    private static String safeSuffix(String filename) {
-        int dot = filename.lastIndexOf('.');
+    private String safeSuffix(String filename) {
+        int dot = filename.lastIndexOf(DOT);
         if (dot <= 0) {
             return "";
         }
         String suffix = filename.substring(dot + 1);
-        return SAFE_EXTENSION.matcher(suffix).matches() ? "." + suffix.toLowerCase(Locale.ROOT) : "";
+        return SAFE_EXTENSION.matcher(suffix).matches() ? DOT + suffix.toLowerCase(Locale.ROOT) : "";
     }
 }
