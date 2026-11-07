@@ -3,7 +3,6 @@ package com.example.domain.file.service;
 import cn.hutool.core.util.RandomUtil;
 import com.example.domain.file.adapter.port.IFileStoragePort;
 import com.example.domain.file.adapter.repository.IBlogFileRepository;
-import com.example.domain.file.model.dto.FileUploadResponseDTO;
 import com.example.domain.file.model.entity.BlogFileEntity;
 import com.example.domain.file.model.entity.FileUploadSource;
 import com.example.domain.file.model.valobj.StorageLocation;
@@ -33,8 +32,8 @@ public class FileService implements IFileService {
     private final Clock clock;
 
     @Override
-    public FileUploadResponseDTO upload(String filename, long fileSize, String mimeType,
-                                       FileUploadSource.StreamSource streamSource) {
+    public BlogFileEntity upload(String filename, long fileSize, String mimeType,
+                                 FileUploadSource.StreamSource streamSource) {
         StorageLocation location = store(filename, fileSize, mimeType, streamSource);
         BlogFileEntity metadata = BlogFileEntity.builder()
                 .originalName(filename)
@@ -44,15 +43,8 @@ public class FileService implements IFileService {
                 .mimeType(mimeType)
                 .fileSize(fileSize)
                 .build();
-        Long fileId = saveMetadata(metadata);
-        return FileUploadResponseDTO.builder()
-                .fileId(fileId)
-                .objectKey(location.storageKey())
-                .url("/" + location.storageKey())
-                .originalName(filename)
-                .mimeType(mimeType)
-                .fileSize(fileSize)
-                .build();
+        metadata.setId(saveMetadata(metadata));
+        return metadata;
     }
 
     private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {

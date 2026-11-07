@@ -1,6 +1,6 @@
 package com.example.domain.file.service;
 
-import com.example.domain.file.model.dto.FileUploadResponseDTO;
+import com.example.domain.file.model.entity.BlogFileEntity;
 import com.example.domain.file.model.entity.FileUploadSource;
 
 public interface IFileService {
@@ -12,8 +12,8 @@ public interface IFileService {
      * @param fileSize 文件实际字节数
      * @param mimeType 根据内容探测得到的 MIME 类型
      * @param streamSource 每次打开均可从头读取的文件源
-     * @return 已上传文件的元数据和访问路径
+     * @return 已保存的文件实体，包含数据库生成的主键
      */
-    FileUploadResponseDTO upload(String filename, long fileSize, String mimeType,
-                                 FileUploadSource.StreamSource streamSource);
+    BlogFileEntity upload(String filename, long fileSize, String mimeType,
+                          FileUploadSource.StreamSource streamSource);
 }

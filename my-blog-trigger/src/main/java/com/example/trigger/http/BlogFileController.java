@@ -2,6 +2,7 @@ package com.example.trigger.http;
 
 import cn.hutool.core.util.StrUtil;
 import com.example.domain.file.model.dto.FileUploadResponseDTO;
+import com.example.domain.file.model.entity.BlogFileEntity;
 import com.example.domain.file.service.IFileService;
 import com.example.types.core.R;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,17 @@ public class BlogFileController {
         if (StrUtil.isBlank(mimeType) || !ALLOWED_MIME_TYPES.contains(mimeType)) {
             throw new IllegalArgumentException("仅支持上传 PNG、JPEG 和 GIF 图片");
         }
-        return R.success(fileService.upload(filename, file.getSize(), mimeType, file::getInputStream));
+        BlogFileEntity uploadedFile = fileService.upload(filename, file.getSize(), mimeType, file::getInputStream);
+        String objectKey = uploadedFile.getStorageKey();
+        FileUploadResponseDTO response = FileUploadResponseDTO.builder()
+                .fileId(uploadedFile.getId())
+                .objectKey(objectKey)
+                .url("/" + objectKey)
+                .originalName(uploadedFile.getOriginalName())
+                .mimeType(uploadedFile.getMimeType())
+                .fileSize(uploadedFile.getFileSize())
+                .build();
+        return R.success(response);
     }
 
     private String cleanFilename(String originalName) {
