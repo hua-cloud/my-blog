@@ -14,6 +14,5 @@ public interface IFileService {
      * @param streamSource 每次打开均可从头读取的文件源
      * @return 已保存的文件实体，包含数据库生成的主键
      */
-    BlogFileEntity upload(String filename, long fileSize, String mimeType,
-                          FileUploadSource.StreamSource streamSource);
+    BlogFileEntity upload(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource);
 }

@@ -27,13 +27,14 @@ import static com.example.types.enums.ResultStatus.FILE_UPLOAD_RESULT_UNKNOWN;
 @RequiredArgsConstructor
 public class FileService implements IFileService {
 
-    private final IFileStoragePort storage;
-    private final IBlogFileRepository repository;
+    private final IFileStoragePort storagePort;
+
+    private final IBlogFileRepository fileRepository;
+
     private final Clock clock;
 
     @Override
-    public BlogFileEntity upload(String filename, long fileSize, String mimeType,
-                                 FileUploadSource.StreamSource streamSource) {
+    public BlogFileEntity upload(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
         StorageLocation location = store(filename, fileSize, mimeType, streamSource);
         BlogFileEntity metadata = BlogFileEntity.builder()
                 .originalName(filename)
@@ -53,7 +54,7 @@ public class FileService implements IFileService {
         for (int retries = 0; ; retries++) {
             String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR, 6) + suffix;
             try {
-                return storage.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
+                return storagePort.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
             } catch (AppException failure) {
                 if (failure.getResultStatus() == FILE_UPLOAD_RESULT_UNKNOWN) {
                     log.warn("对象上传结果待核查，key={}", key);
@@ -67,7 +68,7 @@ public class FileService implements IFileService {
 
     private Long saveMetadata(BlogFileEntity metadata) {
         try {
-            return repository.save(metadata);
+            return fileRepository.save(metadata);
         } catch (RuntimeException cause) {
             log.warn("文件元数据写入失败，bucket={}, key={}", metadata.getBucketName(), metadata.getStorageKey());
             throw new AppException(FILE_UPLOAD_FAILED, cause);
