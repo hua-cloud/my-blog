@@ -3,11 +3,11 @@ thread:
   pool:
     executor:
       config:
-        core-pool-size: 20
-        max-pool-size: 50
-        keep-alive-time: 5000
-        block-queue-size: 5000
-        policy: CallerRunsPolicy
+        core-pool-size: 2
+        max-pool-size: 4
+        keep-alive-time: 30 # 秒
+        block-queue-size: 32
+        policy: AbortPolicy
 
 # 数据库配置；启动时配置数据库资源信息
 spring:
