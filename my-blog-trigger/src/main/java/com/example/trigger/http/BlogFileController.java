@@ -2,7 +2,7 @@ package com.example.trigger.http;
 
 import cn.hutool.core.util.StrUtil;
 import com.example.domain.file.model.dto.FileUploadResponseDTO;
-import com.example.domain.file.service.FileService;
+import com.example.domain.file.service.IFileService;
 import com.example.types.core.R;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -24,7 +24,7 @@ import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH
 @RequiredArgsConstructor
 public class BlogFileController {
 
-    private final FileService fileService;
+    private final IFileService fileService;
 
     /**
      * 上传一个文件，并返回完成元数据入库的文件信息。
