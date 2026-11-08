@@ -56,7 +56,9 @@ public class BlogFileService implements IBlogFileService {
         if (ObjUtil.isNull(entity)) {
             return false;
         }
-
+        if (fileRepository.delete(id) != 1) {
+            return false;
+        }
         threadPoolExecutor.execute(() -> {
             try {
                 StorageLocation location = new StorageLocation(
