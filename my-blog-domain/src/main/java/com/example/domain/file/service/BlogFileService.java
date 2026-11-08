@@ -4,16 +4,23 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.example.domain.file.adapter.port.IFileStoragePort;
 import com.example.domain.file.adapter.repository.IBlogFileRepository;
+import com.example.domain.file.model.dto.BlogFileResponseDTO;
 import com.example.domain.file.model.entity.BlogFileEntity;
 import com.example.domain.file.model.entity.FileUploadSource;
+import com.example.domain.file.model.valobj.FileType;
 import com.example.domain.file.model.valobj.StorageLocation;
+import com.example.domain.file.model.valobj.StorageType;
 import com.example.types.core.AppException;
+import com.example.types.core.PageQuery;
+import com.example.types.core.PageResult;
+import com.example.types.utils.MapstructUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -26,7 +33,7 @@ import static com.example.types.enums.ResultStatus.FILE_UPLOAD_RESULT_UNKNOWN;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FileService implements IFileService {
+public class BlogFileService implements IBlogFileService {
 
     private final IFileStoragePort storagePort;
 
@@ -35,6 +42,32 @@ public class FileService implements IFileService {
     private final ThreadPoolExecutor threadPoolExecutor;
 
     private final Clock clock;
+
+    @Override
+    public PageResult<BlogFileResponseDTO> page(String searchKeyword, FileType fileType, PageQuery pageQuery) {
+        PageResult<BlogFileEntity> result = fileRepository.page(searchKeyword, fileType, pageQuery);
+        List<BlogFileResponseDTO> records = MapstructUtils.convert(result.getRecords(), BlogFileResponseDTO.class);
+        return PageResult.of(records, result.getTotal());
+    }
+
+    @Override
+    public boolean delete(Long id) {
+        BlogFileEntity entity = fileRepository.selectById(id);
+        if (ObjUtil.isNull(entity)) {
+            return false;
+        }
+
+        threadPoolExecutor.execute(() -> {
+            try {
+                StorageLocation location = new StorageLocation(
+                        StorageType.valueOf(entity.getStorageType()), entity.getBucketName(), entity.getStorageKey());
+                storagePort.delete(location);
+            } catch (Exception e) {
+                log.warn("文件对象异步删除失败，id={}, bucket={}, key={}", id, entity.getBucketName(), entity.getStorageKey(), e);
+            }
+        });
+        return true;
+    }
 
     @Override
     public BlogFileEntity upload(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
@@ -49,6 +82,20 @@ public class FileService implements IFileService {
                 .build();
         entity.setId(saveMetadata(entity, location));
         return entity;
+    }
+
+    private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
+        String prefix = IMAGES_DIRECTORY + LocalDate.now(clock).format(KEY_DATE) + SLASH;
+        String suffix = safeSuffix(filename);
+        String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR_NUMBER, 6) + suffix;
+        try {
+            return storagePort.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
+        } catch (AppException e) {
+            if (e.getResultStatus() == FILE_UPLOAD_RESULT_UNKNOWN) {
+                log.warn("对象上传结果待核查，key={}", key);
+            }
+            throw e;
+        }
     }
 
     private Long saveMetadata(BlogFileEntity entity, StorageLocation location) {
@@ -67,20 +114,6 @@ public class FileService implements IFileService {
                 }
             });
             throw new AppException(FILE_UPLOAD_FAILED, e1);
-        }
-    }
-
-    private StorageLocation store(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource) {
-        String prefix = IMAGES_DIRECTORY + LocalDate.now(clock).format(KEY_DATE) + SLASH;
-        String suffix = safeSuffix(filename);
-        String key = prefix + RandomUtil.randomString(RandomUtil.BASE_CHAR_NUMBER, 6) + suffix;
-        try {
-            return storagePort.store(new FileUploadSource(key, fileSize, mimeType, streamSource));
-        } catch (AppException e) {
-            if (e.getResultStatus() == FILE_UPLOAD_RESULT_UNKNOWN) {
-                log.warn("对象上传结果待核查，key={}", key);
-            }
-            throw e;
         }
     }
 

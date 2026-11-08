@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.domain.file.adapter.repository.IBlogFileRepository;
 import com.example.domain.file.model.entity.BlogFileEntity;
+import com.example.domain.file.model.valobj.FileType;
 import com.example.domain.file.model.valobj.StorageType;
 import com.example.infrastructure.persistence.mapper.IBlogFileMapper;
 import com.example.infrastructure.persistence.converter.PageConverter;
@@ -26,20 +27,33 @@ public class BlogFileRepository implements IBlogFileRepository {
     private final IBlogFileMapper fileMapper;
 
     @Override
-    public PageResult<BlogFileEntity> page(String searchKeyword, PageQuery query) {
+    public PageResult<BlogFileEntity> page(String searchKeyword, FileType fileType, PageQuery query) {
         QueryWrapper<BlogFile> qw = Wrappers.query();
-        qw.and(StrUtil.isNotBlank(searchKeyword), w -> w.lambda()
-                .like(BlogFile::getOriginalName, searchKeyword)
-                .or().like(BlogFile::getStorageType, searchKeyword)
-                .or().like(BlogFile::getBucketName, searchKeyword));
+        qw.lambda().eq(ObjUtil.isNotNull(fileType), BlogFile::getMimeType, fileType.getMimeType())
+                .and(StrUtil.isNotBlank(searchKeyword), w -> w
+                        .like(BlogFile::getOriginalName, searchKeyword)
+                        .or()
+                        .like(BlogFile::getStorageType, searchKeyword)
+                        .or()
+                        .like(BlogFile::getBucketName, searchKeyword));
         if (query.isValidOrder(BlogFile.class)) {
             qw.orderBy(true, query.getIsAsc(), StrUtil.toUnderlineCase(query.getOrderColumn()));
         } else {
-            qw.lambda().orderByDesc(BlogFile::getId);
+            qw.lambda().orderByAsc(BlogFile::getId);
         }
         Page<BlogFile> page = fileMapper.selectPage(PageConverter.toPage(query), qw);
         List<BlogFileEntity> converted = MapstructUtils.convert(page.getRecords(), BlogFileEntity.class);
         return PageConverter.toResult(converted, page.getTotal());
+    }
+
+    @Override
+    public BlogFileEntity selectById(Long id) {
+        return MapstructUtils.convert(fileMapper.selectById(id), BlogFileEntity.class);
+    }
+
+    @Override
+    public int delete(Long id) {
+        return fileMapper.deleteById(id);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.example.domain.file.model.entity;
 
+import com.example.domain.file.model.dto.BlogFileResponseDTO;
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@AutoMapper(target = BlogFileResponseDTO.class, reverseConvertGenerate = false)
 public class BlogFileEntity {
 
     private Long id;

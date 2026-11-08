@@ -1,9 +1,15 @@
 package com.example.domain.file.service;
 
+import com.example.domain.file.model.dto.BlogFileResponseDTO;
 import com.example.domain.file.model.entity.BlogFileEntity;
 import com.example.domain.file.model.entity.FileUploadSource;
+import com.example.domain.file.model.valobj.FileType;
+import com.example.types.core.PageQuery;
+import com.example.types.core.PageResult;
 
-public interface IFileService {
+public interface IBlogFileService {
+
+    PageResult<BlogFileResponseDTO> page(String searchKeyword, FileType fileType, PageQuery pageQuery);
 
     /**
      * 上传已校验的文件，保存元数据后返回结果。
@@ -15,4 +21,6 @@ public interface IFileService {
      * @return 已保存的文件实体，包含数据库生成的主键
      */
     BlogFileEntity upload(String filename, long fileSize, String mimeType, FileUploadSource.StreamSource streamSource);
+
+    boolean delete(Long id);
 }

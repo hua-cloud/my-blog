@@ -1,12 +1,20 @@
 package com.example.trigger.http;
 
 import cn.hutool.core.util.StrUtil;
-import com.example.domain.file.model.dto.FileUploadResponseDTO;
+import com.example.domain.file.model.dto.BlogFileRequestDTO;
+import com.example.domain.file.model.dto.BlogFileResponseDTO;
 import com.example.domain.file.model.entity.BlogFileEntity;
-import com.example.domain.file.service.IFileService;
+import com.example.domain.file.model.valobj.FileType;
+import com.example.domain.file.service.IBlogFileService;
+import com.example.types.core.PageQuery;
+import com.example.types.core.PageResult;
 import com.example.types.core.R;
+import com.example.types.utils.MapstructUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -19,7 +27,6 @@ import java.net.URLConnection;
 
 import static com.example.types.constant.Constants.BACK_SLASH;
 import static com.example.types.constant.Constants.SLASH;
-import static com.example.types.constant.FileUploadConstants.ALLOWED_MIME_TYPES;
 import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH;
 
 @RestController
@@ -27,7 +34,12 @@ import static com.example.types.constant.FileUploadConstants.MAX_FILENAME_LENGTH
 @RequiredArgsConstructor
 public class BlogFileController {
 
-    private final IFileService fileService;
+    private final IBlogFileService fileService;
+
+    @GetMapping("/page")
+    public R<PageResult<BlogFileResponseDTO>> page(BlogFileRequestDTO requestDTO, PageQuery pageQuery) {
+        return R.success(fileService.page(requestDTO.getSearchKeyword(), requestDTO.getFileType(), pageQuery));
+    }
 
     /**
      * 上传一个文件，并返回完成元数据入库的文件信息。
@@ -36,23 +48,22 @@ public class BlogFileController {
      * @return 文件上传结果
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public R<FileUploadResponseDTO> uploadFile(@RequestPart("file") MultipartFile file) {
+    public R<BlogFileResponseDTO> uploadFile(@RequestPart("file") MultipartFile file) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("上传文件不能为空");
         }
         String filename = cleanFilename(file.getOriginalFilename());
         String mimeType = detectMimeType(file);
-        if (StrUtil.isBlank(mimeType) || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+        if (!FileType.supportsMimeType(mimeType)) {
             throw new IllegalArgumentException("仅支持上传 PNG、JPEG 和 GIF 图片");
         }
         BlogFileEntity fileEntity = fileService.upload(filename, file.getSize(), mimeType, file::getInputStream);
-        FileUploadResponseDTO responseDTO = FileUploadResponseDTO.builder()
-                .id(fileEntity.getId())
-                .url(SLASH + fileEntity.getStorageKey())
-                .originalName(fileEntity.getOriginalName())
-                .fileSize(fileEntity.getFileSize())
-                .build();
-        return R.success(responseDTO);
+        return R.success(MapstructUtils.convert(fileEntity, BlogFileResponseDTO.class));
+    }
+
+    @DeleteMapping("/{id}")
+    public R<Void> delete(@PathVariable("id") Long id) {
+        return R.operation(fileService.delete(id));
     }
 
     private String cleanFilename(String originalName) {
