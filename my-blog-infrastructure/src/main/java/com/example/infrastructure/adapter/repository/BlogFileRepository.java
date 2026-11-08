@@ -29,7 +29,8 @@ public class BlogFileRepository implements IBlogFileRepository {
     @Override
     public PageResult<BlogFileEntity> page(String searchKeyword, FileType fileType, PageQuery query) {
         QueryWrapper<BlogFile> qw = Wrappers.query();
-        qw.lambda().eq(ObjUtil.isNotNull(fileType), BlogFile::getMimeType, fileType.getMimeType())
+        String mimeType = ObjUtil.isNotNull(fileType) ? fileType.getMimeType() : null;
+        qw.lambda().eq(StrUtil.isNotBlank(mimeType), BlogFile::getMimeType, mimeType)
                 .and(StrUtil.isNotBlank(searchKeyword), w -> w
                         .like(BlogFile::getOriginalName, searchKeyword)
                         .or()
