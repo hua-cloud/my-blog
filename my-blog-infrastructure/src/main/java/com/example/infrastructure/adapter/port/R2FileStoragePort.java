@@ -1,4 +1,4 @@
-package com.example.infrastructure.adapter.port.file;
+package com.example.infrastructure.adapter.port;
 
 import cn.hutool.core.util.ObjUtil;
 import com.example.domain.file.adapter.port.IFileStoragePort;

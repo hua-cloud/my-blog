@@ -13,6 +13,8 @@ public interface IBlogFileRepository {
 
     BlogFileEntity selectById(Long id);
 
+    boolean existsFileById(Long id);
+
     int delete(Long id);
 
     /**

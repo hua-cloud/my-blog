@@ -39,6 +39,12 @@ public class BlogCategoryRepository implements IBlogCategoryRepository {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return categoryMapper.exists(Wrappers.lambdaQuery(BlogCategory.class)
+                .eq(BlogCategory::getId, id));
+    }
+
+    @Override
     public PageResult<BlogCategoryEntity> page(String searchKeyword, PageQuery query) {
         QueryWrapper<BlogCategory> qw = Wrappers.query();
         qw.and(StrUtil.isNotBlank(searchKeyword), w -> w.lambda()

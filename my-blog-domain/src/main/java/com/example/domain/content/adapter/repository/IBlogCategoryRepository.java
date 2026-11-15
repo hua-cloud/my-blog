@@ -8,6 +8,8 @@ public interface IBlogCategoryRepository {
 
     BlogCategoryEntity selectById(Long id);
 
+    boolean existsById(Long id);
+
     PageResult<BlogCategoryEntity> page(String searchKeyword, PageQuery query);
 
     int save(BlogCategoryEntity categoryEntity);

@@ -53,6 +53,12 @@ public class BlogFileRepository implements IBlogFileRepository {
     }
 
     @Override
+    public boolean existsFileById(Long id) {
+        return fileMapper.exists(Wrappers.lambdaQuery(BlogFile.class)
+                .eq(BlogFile::getId, id));
+    }
+
+    @Override
     public int delete(Long id) {
         return fileMapper.deleteById(id);
     }

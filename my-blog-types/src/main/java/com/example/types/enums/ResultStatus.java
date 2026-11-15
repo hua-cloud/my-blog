@@ -27,7 +27,9 @@ public enum ResultStatus {
     FILE_STORAGE_KEY_CONFLICT(5002, "文件存储键已存在"),
     FILE_UPLOAD_RESULT_UNKNOWN(5003, "文件上传结果不确定"),
     FILE_DELETE_FAILED(5004, "文件删除失败"),
-    ;
+
+    ARTICLE_NOT_FOUND(6001, "文章不存在"),
+    ARTICLE_COVER_NOT_FOUND(6002, "封面文件不存在");
 
     private final int code;
 
