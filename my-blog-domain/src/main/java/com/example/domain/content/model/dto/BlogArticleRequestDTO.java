@@ -7,6 +7,8 @@ import io.github.linpeilie.annotations.AutoMapper;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 @AutoMapper(target = BlogArticleEntity.class, reverseConvertGenerate = false)
 public class BlogArticleRequestDTO {
@@ -25,6 +27,10 @@ public class BlogArticleRequestDTO {
     private Long categoryId;
 
     private Long coverFileId;
+
+    /** 更新时 null 表示保留标签，空列表表示清空。 */
+    @NotNull(message = "标签ID不能为 null", groups = { AddGroup.class, UpdateGroup.class })
+    private Set<Long> tagIds;
 
     @NotNull(message = "文章状态不能为 null", groups = { AddGroup.class, UpdateGroup.class })
     @Min(value = 0, message = "文章状态无效", groups = { AddGroup.class, UpdateGroup.class })

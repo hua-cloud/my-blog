@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.infrastructure.persistence.mapper.IBlogArticleMapper">
+
+    <resultMap id="articleDetailMap" type="com.example.infrastructure.persistence.po.BlogArticleDetail" autoMapping="true">
+        <id column="id" property="id"/>
+        <collection property="tags" ofType="com.example.infrastructure.persistence.po.BlogTag" notNullColumn="tag_id" autoMapping="false">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="name"/>
+            <result column="tag_color" property="color"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectDetailById" resultMap="articleDetailMap">
+        SELECT a.*,
+               c.name AS category_name,
+               f.original_name AS cover_file_name,
+               t.id AS tag_id,
+               t.name AS tag_name,
+               t.color AS tag_color
+        FROM blog_article a
+        LEFT JOIN blog_category c ON c.id = a.category_id
+        LEFT JOIN blog_file f ON f.id = a.cover_file_id
+        LEFT JOIN blog_article_tag at ON at.article_id = a.id
+        LEFT JOIN blog_tag t ON t.id = at.tag_id
+        WHERE a.id = #{id}
+    </select>
+
+    <insert id="insertTagLinks">
+        INSERT INTO blog_article_tag (article_id, tag_id, create_by, create_time)
+        SELECT #{articleId}, id, #{operatorId}, #{createdAt}
+        FROM blog_tag
+        WHERE id IN
+        <foreach collection="tagIds" item="tagId" open="(" separator="," close=")">
+            #{tagId}
+        </foreach>
+    </insert>
+</mapper>

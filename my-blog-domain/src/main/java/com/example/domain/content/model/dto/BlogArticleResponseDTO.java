@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class BlogArticleResponseDTO {
@@ -21,7 +22,16 @@ public class BlogArticleResponseDTO {
 
     private Long categoryId;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String categoryName;
+
     private Long coverFileId;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String coverFileName;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<BlogTagResponseDTO> tags;
 
     private Integer status;
 
