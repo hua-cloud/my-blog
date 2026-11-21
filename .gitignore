@@ -42,3 +42,4 @@ build/
 /.codegraph/
 /docs/
 /.planning/
+/my-blog-app/src/main/resources/application-prod.yml
