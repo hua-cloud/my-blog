@@ -83,7 +83,7 @@
         <foreach collection="articleIds" item="articleId" open="(" separator="," close=")">
             #{articleId}
         </foreach>
-        ORDER BY article_tag.article_id, t.id
+        ORDER BY at.article_id, t.id
     </select>
 
     <insert id="insertTagLinks">
