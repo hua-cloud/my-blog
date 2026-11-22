@@ -1,5 +1,6 @@
 package com.example.domain.content.service;
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.example.domain.content.adapter.repository.IBlogArticleRepository;
 import com.example.domain.content.adapter.repository.IBlogCategoryRepository;
@@ -40,10 +41,8 @@ public class PublicArticleQueryService implements IPublicArticleQueryService {
     }
 
     @Override
-    public PageResult<PublicArticleSummaryResponseDTO> page(String searchKeyword, Long categoryId, Long tagId,
-                                                           PageQuery pageQuery) {
-        PageResult<BlogArticleEntity> page = articleRepository.pagePublished(
-                StrUtil.trim(searchKeyword), categoryId, tagId, pageQuery);
+    public PageResult<PublicArticleSummaryResponseDTO> page(String searchKeyword, Long categoryId, Long tagId, PageQuery pageQuery) {
+        PageResult<BlogArticleEntity> page = articleRepository.pagePublished(searchKeyword, categoryId, tagId, pageQuery);
         List<PublicArticleSummaryResponseDTO> records = page.getRecords().stream()
                 .map(article -> toResponse(article, PublicArticleSummaryResponseDTO.class))
                 .toList();
@@ -53,7 +52,7 @@ public class PublicArticleQueryService implements IPublicArticleQueryService {
     @Override
     public PublicArticleDetailResponseDTO detail(Long id) {
         BlogArticleEntity article = articleRepository.findPublishedById(id);
-        if (article == null) {
+        if (ObjUtil.isNull(article)) {
             throw new AppException(ARTICLE_NOT_FOUND);
         }
         return toResponse(article, PublicArticleDetailResponseDTO.class);
@@ -70,10 +69,10 @@ public class PublicArticleQueryService implements IPublicArticleQueryService {
     }
 
     private <T extends PublicArticleSummaryResponseDTO> T toResponse(BlogArticleEntity article, Class<T> type) {
-        T response = MapstructUtils.convert(article, type);
+        T target = MapstructUtils.convert(article, type);
         if (StrUtil.isNotBlank(article.getCoverStorageKey())) {
-            response.setCoverUrl(coverBaseUrl + article.getCoverStorageKey());
+            target.setCoverUrl(coverBaseUrl + article.getCoverStorageKey());
         }
-        return response;
+        return target;
     }
 }

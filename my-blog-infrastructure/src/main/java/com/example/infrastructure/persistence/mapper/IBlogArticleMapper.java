@@ -24,7 +24,7 @@ public interface IBlogArticleMapper extends BaseMapper<BlogArticle> {
                                                 @Param("searchKeyword") String searchKeyword,
                                                 @Param("categoryId") Long categoryId, @Param("tagId") Long tagId);
 
-    List<BlogArticleDetail> selectTagsByArticleIds(@Param("articleIds") List<Long> articleIds);
+    List<BlogArticleDetail> selectTagsByArticleIds(@Param("articleIds") Set<Long> articleIds);
 
     int insertTagLinks(@Param("articleId") Long articleId, @Param("tagIds") Set<Long> tagIds,
                        @Param("operatorId") Long operatorId, @Param("createdAt") LocalDateTime createdAt);

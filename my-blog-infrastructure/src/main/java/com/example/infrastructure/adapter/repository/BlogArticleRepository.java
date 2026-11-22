@@ -67,13 +67,14 @@ public class BlogArticleRepository implements IBlogArticleRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResult<BlogArticleEntity> pagePublished(String searchKeyword, Long categoryId, Long tagId,
-                                                       PageQuery query) {
-        Page<BlogArticleDetail> page = articleMapper.selectPublishedPage(PageConverter.toPage(query),
-                PUBLISHED.getCode(), searchKeyword, categoryId, tagId);
+    public PageResult<BlogArticleEntity> pagePublished(String searchKeyword, Long categoryId, Long tagId, PageQuery query) {
+        Page<BlogArticleDetail> page = articleMapper.selectPublishedPage(PageConverter.toPage(query), PUBLISHED.getCode(),
+                searchKeyword, categoryId, tagId);
         List<BlogArticleDetail> articles = page.getRecords();
-        if (!articles.isEmpty()) {
-            List<Long> articleIds = articles.stream().map(BlogArticleDetail::getId).toList();
+        if (CollUtil.isNotEmpty(articles)) {
+            Set<Long> articleIds = articles.stream()
+                    .map(BlogArticleDetail::getId)
+                    .collect(Collectors.toSet());
             Map<Long, List<BlogTag>> tagsByArticle = articleMapper.selectTagsByArticleIds(articleIds).stream()
                     .collect(Collectors.toMap(BlogArticleDetail::getId, BlogArticleDetail::getTags));
             articles.forEach(article -> article.setTags(tagsByArticle.getOrDefault(article.getId(), List.of())));

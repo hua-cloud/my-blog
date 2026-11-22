@@ -11,6 +11,11 @@
         </collection>
     </resultMap>
 
+    <sql id="publicArticleColumns">
+        a.id, a.title, a.summary, a.published_at, a.category_id,
+        c.name AS category_name, f.storage_key AS cover_storage_key
+    </sql>
+
     <sql id="articleTagColumns">
         t.id AS tag_id,
         t.name AS tag_name,
@@ -22,14 +27,9 @@
         LEFT JOIN blog_tag t ON t.id = article_tag.tag_id
     </sql>
 
-    <sql id="publicArticleColumns">
-        a.id, a.title, a.summary, a.published_at, a.category_id,
-        c.name AS category_name, f.storage_key AS cover_storage_key
-    </sql>
-
     <sql id="publicArticleJoins">
         LEFT JOIN blog_category c ON c.id = a.category_id
-        LEFT JOIN blog_file f ON f.id = a.cover_file_id AND f.storage_type = 'R2'
+        LEFT JOIN blog_file f ON f.id = a.cover_file_id
     </sql>
 
     <select id="selectDetailById" resultMap="articleDetailMap">
@@ -38,8 +38,7 @@
                f.original_name AS cover_file_name,
                <include refid="articleTagColumns"/>
         FROM blog_article a
-        LEFT JOIN blog_category c ON c.id = a.category_id
-        LEFT JOIN blog_file f ON f.id = a.cover_file_id
+        <include refid="publicArticleJoins"/>
         <include refid="articleTagJoins"/>
         WHERE a.id = #{id}
     </select>
@@ -50,8 +49,7 @@
         <include refid="publicArticleJoins"/>
         WHERE a.status = #{publishedStatus}
         <if test="searchKeyword != null and searchKeyword != ''">
-            AND (a.title LIKE CONCAT('%', #{searchKeyword}, '%')
-                 OR a.summary LIKE CONCAT('%', #{searchKeyword}, '%'))
+            AND (a.title LIKE CONCAT('%', #{searchKeyword}, '%') OR a.summary LIKE CONCAT('%', #{searchKeyword}, '%'))
         </if>
         <if test="categoryId != null">
             AND a.category_id = #{categoryId}
@@ -78,10 +76,10 @@
     </select>
 
     <select id="selectTagsByArticleIds" resultMap="articleDetailMap">
-        SELECT article_tag.article_id AS id, <include refid="articleTagColumns"/>
-        FROM blog_article_tag article_tag
-        INNER JOIN blog_tag t ON t.id = article_tag.tag_id
-        WHERE article_tag.article_id IN
+        SELECT at.article_id AS id, <include refid="articleTagColumns"/>
+        FROM blog_article_tag at
+        INNER JOIN blog_tag t ON t.id = at.tag_id
+        WHERE at.article_id IN
         <foreach collection="articleIds" item="articleId" open="(" separator="," close=")">
             #{articleId}
         </foreach>
