@@ -4,11 +4,15 @@ import com.example.domain.content.model.entity.BlogTagEntity;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
 
+import java.util.List;
+
 public interface IBlogTagRepository {
 
     BlogTagEntity selectById(Long id);
 
     PageResult<BlogTagEntity> page(String searchKeyword, PageQuery query);
+
+    List<BlogTagEntity> listWithPublishedArticles();
 
     int save(BlogTagEntity tagEntity);
 

@@ -2,4 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.infrastructure.persistence.mapper.IBlogTagMapper">
 
+    <select id="selectWithPublishedArticles" resultType="com.example.infrastructure.persistence.po.BlogTag">
+        SELECT t.id, t.name, t.color
+        FROM blog_tag t
+        WHERE EXISTS (
+            SELECT 1
+            FROM blog_article_tag article_tag
+            INNER JOIN blog_article a ON a.id = article_tag.article_id
+            WHERE article_tag.tag_id = t.id AND a.status = #{publishedStatus}
+        )
+        ORDER BY t.id
+    </select>
+
 </mapper>

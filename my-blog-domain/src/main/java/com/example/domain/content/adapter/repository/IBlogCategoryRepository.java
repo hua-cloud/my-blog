@@ -4,6 +4,8 @@ import com.example.domain.content.model.entity.BlogCategoryEntity;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
 
+import java.util.List;
+
 public interface IBlogCategoryRepository {
 
     BlogCategoryEntity selectById(Long id);
@@ -11,6 +13,8 @@ public interface IBlogCategoryRepository {
     boolean existsById(Long id);
 
     PageResult<BlogCategoryEntity> page(String searchKeyword, PageQuery query);
+
+    List<BlogCategoryEntity> listWithPublishedArticles();
 
     int save(BlogCategoryEntity categoryEntity);
 

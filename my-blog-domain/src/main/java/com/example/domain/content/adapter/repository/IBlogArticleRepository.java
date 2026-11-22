@@ -10,6 +10,10 @@ public interface IBlogArticleRepository {
 
     PageResult<BlogArticleEntity> page(String searchKeyword, Integer status, PageQuery query);
 
+    BlogArticleEntity findPublishedById(Long id);
+
+    PageResult<BlogArticleEntity> pagePublished(String searchKeyword, Long categoryId, Long tagId, PageQuery query);
+
     int save(BlogArticleEntity article);
 
     int update(BlogArticleEntity article);

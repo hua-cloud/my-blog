@@ -16,5 +16,7 @@ public class BlogArticleDetail extends BlogArticle {
 
     private String coverFileName;
 
+    private String coverStorageKey;
+
     private List<BlogTag> tags;
 }

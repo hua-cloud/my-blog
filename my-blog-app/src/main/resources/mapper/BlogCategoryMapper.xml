@@ -2,4 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.infrastructure.persistence.mapper.IBlogCategoryMapper">
 
+    <select id="selectWithPublishedArticles" resultType="com.example.infrastructure.persistence.po.BlogCategory">
+        SELECT c.id, c.name, c.description, c.sort_order
+        FROM blog_category c
+        WHERE EXISTS (
+            SELECT 1 FROM blog_article a WHERE a.category_id = c.id AND a.status = #{publishedStatus}
+        )
+        ORDER BY c.sort_order, c.id
+    </select>
+
 </mapper>

@@ -1,7 +1,10 @@
 package com.example.domain.content.model.entity;
 
 import com.example.domain.content.model.dto.BlogArticleResponseDTO;
+import com.example.domain.content.model.dto.PublicArticleDetailResponseDTO;
+import com.example.domain.content.model.dto.PublicArticleSummaryResponseDTO;
 import io.github.linpeilie.annotations.AutoMapper;
+import io.github.linpeilie.annotations.AutoMappers;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,7 +12,11 @@ import java.util.List;
 import java.util.Set;
 
 @Data
-@AutoMapper(target = BlogArticleResponseDTO.class, reverseConvertGenerate = false)
+@AutoMappers({
+        @AutoMapper(target = BlogArticleResponseDTO.class, reverseConvertGenerate = false),
+        @AutoMapper(target = PublicArticleSummaryResponseDTO.class, reverseConvertGenerate = false),
+        @AutoMapper(target = PublicArticleDetailResponseDTO.class, reverseConvertGenerate = false)
+})
 public class BlogArticleEntity {
 
     private Long id;
@@ -29,6 +36,8 @@ public class BlogArticleEntity {
     private Long coverFileId;
 
     private String coverFileName;
+
+    private String coverStorageKey;
 
     private Set<Long> tagIds;
 

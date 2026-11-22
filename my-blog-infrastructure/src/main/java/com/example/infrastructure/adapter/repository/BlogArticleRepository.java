@@ -13,6 +13,7 @@ import com.example.infrastructure.persistence.converter.PageConverter;
 import com.example.infrastructure.persistence.mapper.IBlogArticleMapper;
 import com.example.infrastructure.persistence.po.BlogArticle;
 import com.example.infrastructure.persistence.po.BlogArticleDetail;
+import com.example.infrastructure.persistence.po.BlogTag;
 import com.example.types.core.AppException;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
@@ -23,8 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import static com.example.domain.content.model.valobj.ArticleStatus.PUBLISHED;
 import static com.example.types.enums.ResultStatus.TAG_NOT_FOUND;
 
 @Repository
@@ -52,6 +56,29 @@ public class BlogArticleRepository implements IBlogArticleRepository {
         }
         Page<BlogArticle> page = articleMapper.selectPage(PageConverter.toPage(query), qw);
         List<BlogArticleEntity> records = MapstructUtils.convert(page.getRecords(), BlogArticleEntity.class);
+        return PageConverter.toResult(records, page.getTotal());
+    }
+
+    @Override
+    public BlogArticleEntity findPublishedById(Long id) {
+        BlogArticleDetail detail = articleMapper.selectPublishedDetailById(id, PUBLISHED.getCode());
+        return MapstructUtils.convert(detail, BlogArticleEntity.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResult<BlogArticleEntity> pagePublished(String searchKeyword, Long categoryId, Long tagId,
+                                                       PageQuery query) {
+        Page<BlogArticleDetail> page = articleMapper.selectPublishedPage(PageConverter.toPage(query),
+                PUBLISHED.getCode(), searchKeyword, categoryId, tagId);
+        List<BlogArticleDetail> articles = page.getRecords();
+        if (!articles.isEmpty()) {
+            List<Long> articleIds = articles.stream().map(BlogArticleDetail::getId).toList();
+            Map<Long, List<BlogTag>> tagsByArticle = articleMapper.selectTagsByArticleIds(articleIds).stream()
+                    .collect(Collectors.toMap(BlogArticleDetail::getId, BlogArticleDetail::getTags));
+            articles.forEach(article -> article.setTags(tagsByArticle.getOrDefault(article.getId(), List.of())));
+        }
+        List<BlogArticleEntity> records = MapstructUtils.convert(articles, BlogArticleEntity.class);
         return PageConverter.toResult(records, page.getTotal());
     }
 

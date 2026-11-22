@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.domain.content.adapter.repository.IBlogTagRepository;
 import com.example.domain.content.model.entity.BlogTagEntity;
+import com.example.domain.content.model.valobj.ArticleStatus;
 import com.example.infrastructure.persistence.mapper.IBlogTagMapper;
 import com.example.infrastructure.persistence.converter.PageConverter;
 import com.example.types.core.PageQuery;
@@ -50,6 +51,12 @@ public class BlogTagRepository implements IBlogTagRepository {
         Page<BlogTag> page = tagMapper.selectPage(PageConverter.toPage(query), qw);
         List<BlogTagEntity> converted = MapstructUtils.convert(page.getRecords(), BlogTagEntity.class);
         return PageConverter.toResult(converted, page.getTotal());
+    }
+
+    @Override
+    public List<BlogTagEntity> listWithPublishedArticles() {
+        return MapstructUtils.convert(tagMapper.selectWithPublishedArticles(ArticleStatus.PUBLISHED.getCode()),
+                BlogTagEntity.class);
     }
 
     @Override

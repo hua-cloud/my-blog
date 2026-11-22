@@ -35,3 +35,4 @@ file:
       access-key-id: ${R2_ACCESS_KEY_ID:}
       secret-access-key: ${R2_SECRET_ACCESS_KEY:}
       bucket: ${R2_BUCKET:}
+      public-base-url: https://storage.zynvora.xyz

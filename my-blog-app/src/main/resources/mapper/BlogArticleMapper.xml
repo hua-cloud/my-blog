@@ -11,19 +11,81 @@
         </collection>
     </resultMap>
 
+    <sql id="articleTagColumns">
+        t.id AS tag_id,
+        t.name AS tag_name,
+        t.color AS tag_color
+    </sql>
+
+    <sql id="articleTagJoins">
+        LEFT JOIN blog_article_tag article_tag ON article_tag.article_id = a.id
+        LEFT JOIN blog_tag t ON t.id = article_tag.tag_id
+    </sql>
+
+    <sql id="publicArticleColumns">
+        a.id, a.title, a.summary, a.published_at, a.category_id,
+        c.name AS category_name, f.storage_key AS cover_storage_key
+    </sql>
+
+    <sql id="publicArticleJoins">
+        LEFT JOIN blog_category c ON c.id = a.category_id
+        LEFT JOIN blog_file f ON f.id = a.cover_file_id AND f.storage_type = 'R2'
+    </sql>
+
     <select id="selectDetailById" resultMap="articleDetailMap">
         SELECT a.*,
                c.name AS category_name,
                f.original_name AS cover_file_name,
-               t.id AS tag_id,
-               t.name AS tag_name,
-               t.color AS tag_color
+               <include refid="articleTagColumns"/>
         FROM blog_article a
         LEFT JOIN blog_category c ON c.id = a.category_id
         LEFT JOIN blog_file f ON f.id = a.cover_file_id
-        LEFT JOIN blog_article_tag at ON at.article_id = a.id
-        LEFT JOIN blog_tag t ON t.id = at.tag_id
+        <include refid="articleTagJoins"/>
         WHERE a.id = #{id}
+    </select>
+
+    <select id="selectPublishedPage" resultType="com.example.infrastructure.persistence.po.BlogArticleDetail">
+        SELECT <include refid="publicArticleColumns"/>
+        FROM blog_article a
+        <include refid="publicArticleJoins"/>
+        WHERE a.status = #{publishedStatus}
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (a.title LIKE CONCAT('%', #{searchKeyword}, '%')
+                 OR a.summary LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="categoryId != null">
+            AND a.category_id = #{categoryId}
+        </if>
+        <if test="tagId != null">
+            AND EXISTS (
+                SELECT 1
+                FROM blog_article_tag filter_tag
+                INNER JOIN blog_tag selected_tag ON selected_tag.id = filter_tag.tag_id
+                WHERE filter_tag.article_id = a.id AND filter_tag.tag_id = #{tagId}
+            )
+        </if>
+        ORDER BY a.published_at DESC, a.id DESC
+    </select>
+
+    <select id="selectPublishedDetailById" resultMap="articleDetailMap">
+        SELECT <include refid="publicArticleColumns"/>,
+               a.content_markdown, <include refid="articleTagColumns"/>
+        FROM blog_article a
+        <include refid="publicArticleJoins"/>
+        <include refid="articleTagJoins"/>
+        WHERE a.status = #{publishedStatus} AND a.id = #{id}
+        ORDER BY t.id
+    </select>
+
+    <select id="selectTagsByArticleIds" resultMap="articleDetailMap">
+        SELECT article_tag.article_id AS id, <include refid="articleTagColumns"/>
+        FROM blog_article_tag article_tag
+        INNER JOIN blog_tag t ON t.id = article_tag.tag_id
+        WHERE article_tag.article_id IN
+        <foreach collection="articleIds" item="articleId" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+        ORDER BY article_tag.article_id, t.id
     </select>
 
     <insert id="insertTagLinks">
