@@ -21,23 +21,25 @@ import java.util.List;
 import static com.example.types.enums.ResultStatus.ARTICLE_NOT_FOUND;
 
 @Service
-public class PublicArticleQueryService {
+public class PublicArticleQueryService implements IPublicArticleQueryService {
 
     private final IBlogArticleRepository articleRepository;
+
     private final IBlogCategoryRepository categoryRepository;
+
     private final IBlogTagRepository tagRepository;
+
     private final String coverBaseUrl;
 
-    public PublicArticleQueryService(IBlogArticleRepository articleRepository,
-                                     IBlogCategoryRepository categoryRepository,
-                                     IBlogTagRepository tagRepository,
-                                     @Value("${file.storage.r2.public-base-url}") String coverBaseUrl) {
+    public PublicArticleQueryService(IBlogArticleRepository articleRepository, IBlogCategoryRepository categoryRepository,
+                                     IBlogTagRepository tagRepository, @Value("${file.storage.r2.public-base-url}") String coverBaseUrl) {
         this.articleRepository = articleRepository;
         this.categoryRepository = categoryRepository;
         this.tagRepository = tagRepository;
         this.coverBaseUrl = StrUtil.addSuffixIfNot(coverBaseUrl, "/");
     }
 
+    @Override
     public PageResult<PublicArticleSummaryResponseDTO> page(String searchKeyword, Long categoryId, Long tagId,
                                                            PageQuery pageQuery) {
         PageResult<BlogArticleEntity> page = articleRepository.pagePublished(
@@ -48,6 +50,7 @@ public class PublicArticleQueryService {
         return PageResult.of(records, page.getTotal());
     }
 
+    @Override
     public PublicArticleDetailResponseDTO detail(Long id) {
         BlogArticleEntity article = articleRepository.findPublishedById(id);
         if (article == null) {
@@ -56,10 +59,12 @@ public class PublicArticleQueryService {
         return toResponse(article, PublicArticleDetailResponseDTO.class);
     }
 
+    @Override
     public List<BlogCategoryResponseDTO> listCategories() {
         return MapstructUtils.convert(categoryRepository.listWithPublishedArticles(), BlogCategoryResponseDTO.class);
     }
 
+    @Override
     public List<BlogTagResponseDTO> listTags() {
         return MapstructUtils.convert(tagRepository.listWithPublishedArticles(), BlogTagResponseDTO.class);
     }

@@ -55,8 +55,7 @@ public class BlogTagRepository implements IBlogTagRepository {
 
     @Override
     public List<BlogTagEntity> listWithPublishedArticles() {
-        return MapstructUtils.convert(tagMapper.selectWithPublishedArticles(ArticleStatus.PUBLISHED.getCode()),
-                BlogTagEntity.class);
+        return MapstructUtils.convert(tagMapper.selectWithPublishedArticles(ArticleStatus.PUBLISHED.getCode()), BlogTagEntity.class);
     }
 
     @Override

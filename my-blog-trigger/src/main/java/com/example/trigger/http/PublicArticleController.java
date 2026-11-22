@@ -5,7 +5,7 @@ import com.example.domain.content.model.dto.BlogTagResponseDTO;
 import com.example.domain.content.model.dto.PublicArticleDetailResponseDTO;
 import com.example.domain.content.model.dto.PublicArticleSummaryRequestDTO;
 import com.example.domain.content.model.dto.PublicArticleSummaryResponseDTO;
-import com.example.domain.content.service.PublicArticleQueryService;
+import com.example.domain.content.service.IPublicArticleQueryService;
 import com.example.types.core.PageQuery;
 import com.example.types.core.PageResult;
 import com.example.types.core.R;
@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicArticleController {
 
-    private final PublicArticleQueryService articleQueryService;
+    private final IPublicArticleQueryService articleQueryService;
 
     @GetMapping("/article/page")
     public R<PageResult<PublicArticleSummaryResponseDTO>> page(PublicArticleSummaryRequestDTO requestDTO, PageQuery pageQuery) {

@@ -7,9 +7,9 @@
         FROM blog_tag t
         WHERE EXISTS (
             SELECT 1
-            FROM blog_article_tag article_tag
-            INNER JOIN blog_article a ON a.id = article_tag.article_id
-            WHERE article_tag.tag_id = t.id AND a.status = #{publishedStatus}
+            FROM blog_article_tag at
+            INNER JOIN blog_article a ON a.id = at.article_id
+            WHERE at.tag_id = t.id AND a.status = #{publishedStatus}
         )
         ORDER BY t.id
     </select>

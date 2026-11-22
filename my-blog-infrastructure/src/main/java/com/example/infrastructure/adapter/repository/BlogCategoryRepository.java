@@ -65,8 +65,7 @@ public class BlogCategoryRepository implements IBlogCategoryRepository {
 
     @Override
     public List<BlogCategoryEntity> listWithPublishedArticles() {
-        return MapstructUtils.convert(categoryMapper.selectWithPublishedArticles(ArticleStatus.PUBLISHED.getCode()),
-                BlogCategoryEntity.class);
+        return MapstructUtils.convert(categoryMapper.selectWithPublishedArticles(ArticleStatus.PUBLISHED.getCode()), BlogCategoryEntity.class);
     }
 
     @Override
